@@ -1,5 +1,5 @@
 ﻿  SaveMesh.cpp
-E:\Users\Paulius\AppData\Roaming\Autodesk\Autodesk Fusion 360\API\AddIns\SaveMesh\SaveMesh.cpp(79,1): warning C4996: 'getenv': This function or variable may be unsafe. Consider using _dupenv_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+E:\Users\Paulius\AppData\Roaming\Autodesk\Autodesk Fusion 360\API\AddIns\SaveMesh\SaveMesh.cpp(27,1): warning C4996: 'getenv': This function or variable may be unsafe. Consider using _dupenv_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
 E:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\ucrt\stdlib.h(1191): message : see declaration of 'getenv'
 SaveMesh.obj : warning LNK4075: ignoring '/EDITANDCONTINUE' due to '/INCREMENTAL:NO' specification
      Creating library E:\Users\Paulius\AppData\Roaming\Autodesk\Autodesk Fusion 360\API\AddIns\SaveMesh\Debug\SaveMesh.lib and object E:\Users\Paulius\AppData\Roaming\Autodesk\Autodesk Fusion 360\API\AddIns\SaveMesh\Debug\SaveMesh.exp

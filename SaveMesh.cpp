@@ -31,6 +31,50 @@ extern "C" XI_EXPORT bool run(const char* context)
 
 //	SaveMeshDialog dlg();
 
+	ui->messageBox("Ready to save the mesh. Press 'OK' when the mesh is prepared.");
+
+	Ptr<Documents> documents = app->documents();
+	if (!documents)
+	{
+		ui->messageBox("No documents opened!");
+		return false;
+	}
+
+//	Ptr<Document> doc = documents->add(DocumentTypes::FusionDesignDocumentType);
+//	if (!doc)
+//	{
+//		ui->messageBox("Error retrieving a document!");
+//		return false;
+//	}
+
+	Ptr<Product> product = app->activeProduct();
+	if (!product)
+	{
+		ui->messageBox("No active design!");
+		return false;
+	}
+
+	Ptr<Design> design = product;
+	if (!design)
+	{
+		ui->messageBox("Error retrieving active design!");
+		return false;
+	}
+
+	// Get the root component of the active design
+	Ptr<Component> rootComp = design->rootComponent();
+	if (!rootComp)
+	{
+		ui->messageBox("No components in the active design!");
+		return false;
+	}
+
+	Ptr<MeshBodies> meshes = rootComp->meshBodies();
+	{
+		ui->messageBox("No meshes in the active design!");
+		return false;
+	}
+
 	stringstream log_fname;
 	log_fname << getenv("TEMP") << "/SaveMesh.log";
 
@@ -39,6 +83,11 @@ extern "C" XI_EXPORT bool run(const char* context)
 
 	log_file << "The mesh:" << endl;
 
+	for (int ii = 0; ii < meshes->count(); ii++)
+	{
+		Ptr<MeshBody> mesh = meshes->item(ii);
+		log_file << ii << ": " << mesh->name() << endl;
+	}
 
 	log_file.close();
 

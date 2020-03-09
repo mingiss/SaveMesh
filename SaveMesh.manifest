@@ -1,0 +1,15 @@
+{
+	"autodeskProduct":	"Fusion360",
+	"type":	"addin",
+	"author":	"",
+	"description":	{
+		"":	""
+	},
+	"supportedOS":	"windows|mac",
+	"editEnabled":	true,
+	"id":	"7d5fc035-ea29-4498-9cfb-d3be1cf53b2a",
+	"version":	"",
+	"runOnStartup":	true,
+	"sourcewindows":	"SaveMesh.vcxproj",
+	"sourcemac":	"SaveMesh.xcodeproj"
+}

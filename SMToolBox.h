@@ -40,6 +40,9 @@ public:
 class SMCommandCreatedEventHandler: public CommandCreatedEventHandler
 {
 public:
+    Ptr<UserInterface> m_ui = NULL;
+
+    bool init(Ptr<UserInterface> ui);
     void notify(const Ptr<CommandCreatedEventArgs>& eventArgs) override;
 private:
     SMOnExecuteEventHander onExecuteHandler;
@@ -47,4 +50,4 @@ private:
     SMOnInputChangedEventHander onInputChangedHandler;
 };
 
-extern SMCommandCreatedEventHandler _cmdCreatedHandler;
+extern SMCommandCreatedEventHandler theCmdCreatedHandler;

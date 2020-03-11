@@ -12,17 +12,22 @@
 
 using namespace std;
 
-Ptr<Application> app;
-Ptr<UserInterface> ui;
-
-SaveMesh theSaveMesh;
-
-void SaveMesh::init()
+bool SaveMesh::init()
 {
+	m_app = Application::get();
+	if (!m_app)
+		return false;
+
+	m_ui = m_app->userInterface();
+	if (!m_ui)
+		return false;
+
 	// init log file
 	stringstream log_fname;
 	log_fname << getenv("TEMP") << "/SaveMesh.log";
 	m_sLogFname = log_fname.str();
+
+	return true;
 }
 
 void SaveMesh::logMsg(const char* msg)
@@ -35,33 +40,39 @@ void SaveMesh::logMsg(const char* msg)
 
 bool SaveMesh::saveActiveMesh()
 {
-	// ui->messageBox("Ready to save the mesh. Press 'OK' when the mesh is prepared.");
+	if (!m_app)
+		return false;
 
-	Ptr<Documents> documents = app->documents();
+	if (!m_ui)
+		return false;
+
+	// m_ui->messageBox("Ready to save the mesh. Press 'OK' when the mesh is prepared.");
+
+	Ptr<Documents> documents = m_app->documents();
 	if (!documents)
 	{
-		ui->messageBox("No documents opened!");
+		m_ui->messageBox("No documents opened!");
 		return false;
 	}
 
 	//	Ptr<Document> doc = documents->add(DocumentTypes::FusionDesignDocumentType);
 	//	if (!doc)
 	//	{
-	//		ui->messageBox("Error retrieving a document!");
+	//		m_ui->messageBox("Error retrieving a document!");
 	//		return false;
 	//	}
 
-	Ptr<Product> product = app->activeProduct();
+	Ptr<Product> product = m_app->activeProduct();
 	if (!product)
 	{
-		ui->messageBox("No active design!");
+		m_ui->messageBox("No active design!");
 		return false;
 	}
 
 	Ptr<Design> design = product;
 	if (!design)
 	{
-		ui->messageBox("Error retrieving active design!");
+		m_ui->messageBox("Error retrieving active design!");
 		return false;
 	}
 
@@ -69,13 +80,13 @@ bool SaveMesh::saveActiveMesh()
 	Ptr<Component> rootComp = design->rootComponent();
 	if (!rootComp)
 	{
-		ui->messageBox("No components in the active design!");
+		m_ui->messageBox("No components in the active design!");
 		return false;
 	}
 
 	Ptr<MeshBodies> meshes = rootComp->meshBodies();
 	{
-		ui->messageBox("No meshes in the active design!");
+		m_ui->messageBox("No meshes in the active design!");
 		return false;
 	}
 
@@ -89,64 +100,37 @@ bool SaveMesh::saveActiveMesh()
 		logMsg(out_str.str().c_str());
 	}
 
-	ui->messageBox(m_sLogFname);
-	ui->messageBox("The mesh is saved");
+	m_ui->messageBox(m_sLogFname);
+	m_ui->messageBox("The mesh is saved");
 
 	return true;
 }
 
+
+SaveMesh theSaveMesh;
+
+
 extern "C" XI_EXPORT bool run(const char* context)
 {
-	app = Application::get();
-	if (!app)
-		return false;
+	bool retc = true;
 
-	ui = app->userInterface();
-	if (!ui)
-		return false;
+	if (retc) retc = theSaveMesh.init();
 
-	theSaveMesh.init();
+	if (retc) retc = theCmdCreatedHandler.init(theSaveMesh.m_ui);
 
-	// Create the command definition.
-	Ptr<CommandDefinitions> commandDefinitions = ui->commandDefinitions();
-	if (!commandDefinitions)
-		return nullptr;
-
-	// Get the existing command definition or create it if it doesn't already exist.
-	Ptr<CommandDefinition> cmdDef = commandDefinitions->itemById("cmdInputsSample");
-	if (!cmdDef)
-	{
-		cmdDef = commandDefinitions->addButtonDefinition("cmdInputsSample",
-			"Command Inputs Sample",
-			"Sample to demonstrate various command inputs.");
-	}
-
-	// Connect to the command created event.
-	Ptr<CommandCreatedEvent> commandCreatedEvent = cmdDef->commandCreated();
-	if (!commandCreatedEvent)
-		return false;
-	commandCreatedEvent->add(&_cmdCreatedHandler);
-
-	// Execute the command definition.
-	cmdDef->execute();
-
-	// Prevent this module from being terminated when the script returns, because we are waiting for event handlers to fire.
-	adsk::autoTerminate(false);
-
-	return true;
+	return retc;
 }
 
 extern "C" XI_EXPORT bool stop(const char* context)
 {
-	if (ui)
+	if (theSaveMesh.m_ui)
 	{
-		ui->messageBox("SaveMesh stopped");
-		ui = nullptr;
+		theSaveMesh.m_ui->messageBox("SaveMesh stopped");
+		theSaveMesh.m_ui = nullptr;
 	}
 
 	return true;
 }
-
 
 #ifdef XI_WIN
 

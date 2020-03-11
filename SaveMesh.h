@@ -16,16 +16,18 @@ using namespace adsk::core;
 using namespace adsk::fusion;
 using namespace adsk::cam;
 
-extern Ptr<Application> app;
-extern Ptr<UserInterface> ui;
-
 class SaveMesh
 {
 private:
 	string m_sLogFname;
 
 public:
-	void init();
+	Ptr<Application> m_app = nullptr;
+	Ptr<UserInterface> m_ui = nullptr;
+
+	bool init();
 	void logMsg(const char* msg);
 	bool saveActiveMesh();
 };
+
+extern SaveMesh theSaveMesh;

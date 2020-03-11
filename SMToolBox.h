@@ -13,21 +13,21 @@ using namespace adsk::fusion;
 using namespace adsk::cam;
 
 // InputChange event handler.
-class SMOnInputChangedEventHander: public InputChangedEventHandler
+class SmOnInputChangedEventHander: public InputChangedEventHandler
 {
 public:
     void notify(const Ptr<InputChangedEventArgs>& eventArgs) override;
 };
 
 // CommandExecuted event handler.
-class SMOnExecuteEventHander: public CommandEventHandler
+class SmOnExecuteEventHander: public CommandEventHandler
 {
 public:
     void notify(const Ptr<CommandEventArgs>& eventArgs) override {}
 };
 
 // CommandDestroyed event handler
-class SMOnDestroyEventHandler : public CommandEventHandler
+class SmOnDestroyEventHandler : public CommandEventHandler
 {
 public:
     void notify(const Ptr<CommandEventArgs>& eventArgs) override
@@ -37,7 +37,7 @@ public:
 };
 
 // CommandCreated event handler
-class SMCommandCreatedEventHandler: public CommandCreatedEventHandler
+class SmToolboxHandler: public CommandCreatedEventHandler
 {
 public:
     Ptr<UserInterface> m_ui = NULL;
@@ -45,9 +45,9 @@ public:
     bool init(Ptr<UserInterface> ui);
     void notify(const Ptr<CommandCreatedEventArgs>& eventArgs) override;
 private:
-    SMOnExecuteEventHander onExecuteHandler;
-    SMOnDestroyEventHandler onDestroyHandler;
-    SMOnInputChangedEventHander onInputChangedHandler;
+    SmOnExecuteEventHander onExecuteHandler;
+    SmOnDestroyEventHandler onDestroyHandler;
+    SmOnInputChangedEventHander onInputChangedHandler;
 };
 
-extern SMCommandCreatedEventHandler theCmdCreatedHandler;
+extern SmToolboxHandler theSmToolBoxHandler;

@@ -5,7 +5,7 @@
 #include <iostream> 
 #include <sstream>
 
-#include "SMToolBox.h"
+#include "SmToolBox.h"
 
 using namespace std;
 
@@ -40,7 +40,7 @@ static void addRowToTable(Ptr<TableCommandInput> tableInput)
 
 
 // InputChange event handler.
-void SMOnInputChangedEventHander::notify(const Ptr<InputChangedEventArgs>& eventArgs)
+void SmOnInputChangedEventHander::notify(const Ptr<InputChangedEventArgs>& eventArgs)
 {
 	Ptr<CommandInputs> inputs = eventArgs->inputs();
 	if (!inputs)
@@ -54,7 +54,7 @@ void SMOnInputChangedEventHander::notify(const Ptr<InputChangedEventArgs>& event
 	if (!tableInput)
 		return;
 
-	if (!theCmdCreatedHandler.m_ui)
+	if (!theSmToolBoxHandler.m_ui)
 		return;
 
 	if (cmdInput->id() == "tableAdd") {
@@ -62,7 +62,7 @@ void SMOnInputChangedEventHander::notify(const Ptr<InputChangedEventArgs>& event
 	}
 	else if (cmdInput->id() == "tableDelete") {
 		if (tableInput->selectedRow() == -1) {
-			theCmdCreatedHandler.m_ui->messageBox("Select one row to delete.");
+			theSmToolBoxHandler.m_ui->messageBox("Select one row to delete.");
 		}
 		else {
 			tableInput->deleteRow(tableInput->selectedRow());
@@ -72,7 +72,7 @@ void SMOnInputChangedEventHander::notify(const Ptr<InputChangedEventArgs>& event
 
 
 // CommandCreated event handler
-bool SMCommandCreatedEventHandler::init(Ptr<UserInterface> ui)
+bool SmToolboxHandler::init(Ptr<UserInterface> ui)
 {
 	m_ui = ui;
 	if (!m_ui)
@@ -96,7 +96,7 @@ bool SMCommandCreatedEventHandler::init(Ptr<UserInterface> ui)
 	Ptr<CommandCreatedEvent> commandCreatedEvent = cmdDef->commandCreated();
 	if (!commandCreatedEvent)
 		return false;
-	commandCreatedEvent->add(&theCmdCreatedHandler);
+	commandCreatedEvent->add(&theSmToolBoxHandler);
 
 	// Execute the command definition.
 	cmdDef->execute();
@@ -108,7 +108,7 @@ bool SMCommandCreatedEventHandler::init(Ptr<UserInterface> ui)
 }
 
 
-void SMCommandCreatedEventHandler::notify(const Ptr<CommandCreatedEventArgs>& eventArgs)
+void SmToolboxHandler::notify(const Ptr<CommandCreatedEventArgs>& eventArgs)
 {
 	if (eventArgs)
 	{
@@ -356,4 +356,4 @@ void SMCommandCreatedEventHandler::notify(const Ptr<CommandCreatedEventArgs>& ev
 	}
 }
 
-SMCommandCreatedEventHandler theCmdCreatedHandler;
+SmToolboxHandler theSmToolBoxHandler;

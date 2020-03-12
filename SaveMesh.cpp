@@ -2,11 +2,33 @@
  * SaveMesh plug-in entry
  */
 
+#include <iostream> 
+#include <sstream>
+#include <Windows.h>
+
 #include "SaveMesh.h"
 // #include "SaveMeshDialog.h"
 #include "SmToolBox.h"
 
 using namespace std;
+
+DWORD WINAPI PollingTheApp(_In_ LPVOID lpParameter)
+{
+	while (theSaveMesh.m_bPollThreadSemaphore)
+	{
+		// theSaveMesh.m_log.msg("polling");
+
+		stringstream out_str;
+		out_str << theSaveMesh.m_iPollCnt++;
+		theSaveMesh.m_log.msg(out_str.str().c_str());
+
+		theSaveMesh.m_saver.saveActiveMesh();
+
+		Sleep(POLLING_TIMEOUT);
+	}
+
+	return(0);
+}
 
 bool SaveMesh::init()
 {
@@ -32,18 +54,32 @@ bool SaveMesh::init()
 
 //	if (retc) retc = theSmToolBoxHandler.init(theSaveMesh.m_ui);
 
-	if (retc) retc = m_saver.saveActiveMesh();
+//	if (retc) retc = m_saver.saveActiveMesh();
+
+	if (retc)
+	{
+		m_hPollThread = CreateThread(NULL, 100000, PollingTheApp, NULL, 0, &m_iPollThread);
+		if (!m_hPollThread)
+		{
+			theSaveMesh.m_ui->messageBox("Could not create polling thread!");
+			retc = false;
+		}
+	}
 
 	return retc;
 }
 
 bool SaveMesh::stop(void)
 {
+	m_bPollThreadSemaphore = false;
+
 	if (theSaveMesh.m_ui)
 	{
 		theSaveMesh.m_ui->messageBox("SaveMesh stopped");
 		theSaveMesh.m_ui = nullptr;
 	}
+
+	Sleep(2 * POLLING_TIMEOUT);
 
 	return true;
 }
@@ -51,7 +87,7 @@ bool SaveMesh::stop(void)
 
 SaveMesh theSaveMesh;
 
-
+#if TRUE
 extern "C" XI_EXPORT bool run(const char* context)
 {
 	bool retc = true;
@@ -88,3 +124,4 @@ BOOL APIENTRY DllMain(HMODULE hmodule, DWORD reason, LPVOID reserved)
 }
 
 #endif // XI_WIN
+#endif

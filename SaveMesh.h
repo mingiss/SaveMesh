@@ -15,13 +15,21 @@ using namespace adsk::core;
 using namespace adsk::fusion;
 using namespace adsk::cam;
 
+#define POLLING_TIMEOUT 3000
+
 class SaveMesh
 {
 private:
-	SmLogger m_log;
-	MeshSaver m_saver;
+	HANDLE m_hPollThread = NULL;
+	DWORD m_iPollThread = 0;
 
 public:
+	MeshSaver m_saver;
+	SmLogger m_log;
+	
+	int m_iPollCnt = 0;
+	bool m_bPollThreadSemaphore = true; // false -- the thread should end
+
 	Ptr<Application> m_app = nullptr;
 	Ptr<UserInterface> m_ui = nullptr;
 

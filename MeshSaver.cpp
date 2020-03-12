@@ -40,19 +40,16 @@ bool MeshSaver::init(Ptr<Application> app, Ptr<UserInterface> ui, SmLogger *plog
 bool MeshSaver::saveActiveMesh(void)
 {
 	bool retc = true;
-	// Ptr<Documents> documents = nullptr;
-	// Ptr<Document> doc = nullptr;
-	Ptr<Product> product = nullptr;
-	Ptr<Design> design = nullptr;
-	Ptr<Component> rootComp = nullptr;
-	Ptr<MeshBodies> meshes = nullptr;
 
 	if (retc) if (!m_app) retc = false;
 	if (retc) if (!m_ui) retc = false;
 	if (retc) if (!m_plog) retc = false;
 
+	m_plog->msg("saveActiveMesh()");
+
 	// m_ui->messageBox("Ready to save the mesh. Press 'OK' when the mesh is prepared.");
 	
+	// Ptr<Documents> documents = nullptr;
 	// if (retc)
 	// {
 	// 	documents = m_app->documents();
@@ -63,6 +60,7 @@ bool MeshSaver::saveActiveMesh(void)
 	// 	}
 	// }
 
+	// Ptr<Document> doc = nullptr;
 	// if (retc)
 	// {
 	//	doc = documents->add(DocumentTypes::FusionDesignDocumentType);
@@ -73,66 +71,86 @@ bool MeshSaver::saveActiveMesh(void)
 	//	}
 	// }
 
+	m_plog->msg("Testing the product...");
+	Ptr<Product> product = nullptr;
 	if (retc)
 	{
 		product = m_app->activeProduct();
 		if (!product)
 		{
-			m_ui->messageBox("No active design!");
+			m_plog->msg("No active design!");
 			retc = false;
 		}
 	}
 
+	m_plog->msg("Testing the design...");
+	Ptr<Design> design = nullptr;
 	if (retc)
 	{
 		design = product;
 		if (!design)
 		{
-			m_ui->messageBox("Error retrieving active design!");
-			retc = false;
-		}
-	}
+			m_plog->msg("Error retrieving the design!");
 
-	// Get the root component of the active design
-	if (retc)
-	{
-		rootComp = design->rootComponent();
-		if (!rootComp)
-		{
-			m_ui->messageBox("No components in the active design!");
-			retc = false;
-		}
-	}
-
-	if (retc)
-	{
-		meshes = rootComp->meshBodies();
-		if (!meshes)
-		{
-			m_ui->messageBox("No meshes in the active design!");
-			retc = false;
-		}
-	}
-
-	if (retc)
-	{
-		m_plog->msg("The mesh:");
-
-		for (int ii = 0; (ii < meshes->count()) && retc; ii++)
-		{
-			Ptr<MeshBody> mesh = meshes->item(ii);
-			if (mesh)
+			m_plog->msg("Testing the cam...");
+			Ptr<CAM> cam = product;
+			if (!cam)
 			{
-				stringstream out_str;
-				out_str << ii << ": " << mesh->name() << endl;
-				m_plog->msg(out_str.str().c_str());
-			}
-			else
+				m_plog->msg("Error retrieving the cam!");
 				retc = false;
+			}
 		}
 	}
 
-	m_ui->messageBox("The mesh is saved");
+	if (design)
+	{
+		// Get the root component of the active design
+		Ptr<Component> rootComp = nullptr;
+		m_plog->msg("Testing the root component...");
+		if (retc)
+		{
+			rootComp = design->rootComponent();
+			if (!rootComp)
+			{
+				m_plog->msg("No components in the active design!");
+				retc = false;
+			}
+		}
 
-	return true;
+		m_plog->msg("Testing the mesh collection...");
+		Ptr<MeshBodies> meshes = nullptr;
+		if (retc)
+		{
+			meshes = rootComp->meshBodies();
+			if (!meshes)
+			{
+				m_plog->msg("No meshes in the active design!");
+				retc = false;
+			}
+		}
+
+		m_plog->msg("Writing meshes...");
+		if (retc)
+		{
+			m_plog->msg("The mesh:");
+
+			for (int ii = 0; (ii < meshes->count()) && retc; ii++)
+			{
+				Ptr<MeshBody> mesh = meshes->item(ii);
+				if (mesh)
+				{
+					stringstream out_str;
+					out_str << ii << ": " << mesh->name() << endl;
+					m_plog->msg(out_str.str().c_str());
+				}
+				else
+					retc = false;
+			}
+		}
+	}
+
+	if (retc) m_plog->msg("The mesh is saved");
+	else m_plog->msg("Error");
+
+	return retc;
 }

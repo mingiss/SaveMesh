@@ -23,7 +23,8 @@ bool SmLogger::init(Ptr<UserInterface> ui, char* app_name)
     {
         // init log file
         stringstream log_fname;
-        log_fname << getenv("TEMP") << "/" << app_name << ".log";
+        // log_fname << getenv("TEMP") << "/" << app_name << ".log";
+        log_fname << getenv("APPDATA") << "/Autodesk/Autodesk Fusion 360/API/AddIns/" << app_name << "/" << app_name << ".log";
         m_sLogFname = log_fname.str();
 
         stringstream msg;

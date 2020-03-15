@@ -2,6 +2,10 @@
  * SaveMesh plug-in entry
  */
 
+#include <iostream> 
+#include <sstream>
+#include <Windows.h>
+
 #include "SaveMesh.h"
 // #include "SaveMeshDialog.h"
 #include "SmToolBox.h"
@@ -72,11 +76,15 @@ bool SaveMesh::init()
 
 bool SaveMesh::stop(void)
 {
+	m_bPollThreadSemaphore = false;
+
 	if (theSaveMesh.m_ui)
 	{
 		m_log.msgBox(__func__, "SaveMesh stopped");
 		theSaveMesh.m_ui = nullptr;
 	}
+
+	Sleep(2 * POLLING_TIMEOUT);
 
 	return true;
 }
@@ -84,7 +92,7 @@ bool SaveMesh::stop(void)
 
 SaveMesh theSaveMesh;
 
-
+#if TRUE
 extern "C" XI_EXPORT bool run(const char* context)
 {
 	bool retc = true;
@@ -121,3 +129,4 @@ BOOL APIENTRY DllMain(HMODULE hmodule, DWORD reason, LPVOID reserved)
 }
 
 #endif // XI_WIN
+#endif

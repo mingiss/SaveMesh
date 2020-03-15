@@ -171,12 +171,6 @@ bool MeshSaver::writeMeshBody(Ptr<MeshBody> mesh_body)
 bool MeshSaver::saveActiveMesh(void)
 {
 	bool retc = true;
-	// Ptr<Documents> documents = nullptr;
-	// Ptr<Document> doc = nullptr;
-	Ptr<Product> product = nullptr;
-	Ptr<Design> design = nullptr;
-	Ptr<Component> rootComp = nullptr;
-	Ptr<MeshBodies> meshes = nullptr;
 
 	if (retc) if (!m_app) retc = false;
 	if (retc) if (!m_ui) retc = false;
@@ -186,6 +180,7 @@ bool MeshSaver::saveActiveMesh(void)
 
 	// if (retc) m_ui->messageBox("Ready to save the mesh. Press 'OK' when the mesh is prepared.");
 	
+	// Ptr<Documents> documents = nullptr;
 	// if (retc)
 	// {
 	// 		documents = m_app->documents();
@@ -196,6 +191,7 @@ bool MeshSaver::saveActiveMesh(void)
 	// 		}
 	// }
 
+	// Ptr<Document> doc = nullptr;
 	// if (retc)
 	// {
 	//		doc = documents->add(DocumentTypes::FusionDesignDocumentType);
@@ -237,8 +233,7 @@ bool MeshSaver::saveActiveMesh(void)
 		}
 	}
 
-	// Get the root component of the active design
-	if (retc)
+	if (design)
 	{
 		// Get the root component of the active design
 		Ptr<Component> rootComp = nullptr;
@@ -252,7 +247,6 @@ bool MeshSaver::saveActiveMesh(void)
 				retc = false;
 			}
 		}
-	}
 
 		Ptr<MeshBodies> meshes = nullptr;
 		if (retc)
@@ -271,10 +265,12 @@ bool MeshSaver::saveActiveMesh(void)
 	{
 		m_plog->msg(__func__, "Writing meshes...");
 
-		for (int ii = 0; (ii < meshes->count()) && retc; ii++)
+		m_plog->msg("Writing meshes...");
+		if (retc)
 		{
-			Ptr<MeshBody> mesh = meshes->item(ii);
-			if (mesh)
+			m_plog->msg("The mesh:");
+
+			for (int ii = 0; (ii < meshes->count()) && retc; ii++)
 			{
 				Ptr<MeshBody> mesh_body = meshes->item(ii);
 				if (mesh_body)
@@ -287,13 +283,11 @@ bool MeshSaver::saveActiveMesh(void)
 				else
 					retc = false;
 			}
-			else
-				retc = false;
 		}
 	}
 
 	if (retc) m_plog->msg(__func__, "The mesh is saved.");
 	else m_plog->msg(__func__, "Error!");
 
-	return true;
+	return retc;
 }

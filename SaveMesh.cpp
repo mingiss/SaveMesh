@@ -8,6 +8,26 @@
 
 using namespace std;
 
+DWORD WINAPI PollingTheApp(_In_ LPVOID lpParameter)
+{
+	theSaveMesh.m_log.msg(__func__, "Polling thread started");
+
+	while (theSaveMesh.m_bPollThreadSemaphore)
+	{
+		// theSaveMesh.m_log.msg(__func__, "polling");
+
+		stringstream out_str;
+		out_str << theSaveMesh.m_iPollCnt++;
+		theSaveMesh.m_log.msg(__func__, out_str.str().c_str());
+
+		theSaveMesh.m_saver.saveActiveMesh();
+
+		Sleep(POLLING_TIMEOUT);
+	}
+
+	return(0);
+}
+
 bool SaveMesh::init()
 {
 	bool retc = true;
@@ -32,7 +52,20 @@ bool SaveMesh::init()
 
 //	if (retc) retc = theSmToolBoxHandler.init(theSaveMesh.m_ui);
 
-	if (retc) retc = m_saver.saveActiveMesh();
+//	if (retc) retc = m_saver.saveActiveMesh();
+
+	if (retc)
+	{
+		m_hPollThread = CreateThread(NULL, 100000, PollingTheApp, NULL, 0, &m_iPollThread);
+		if (!m_hPollThread)
+		{
+			m_log.msgBox(__func__, "Could not create polling thread!");
+			retc = false;
+		}
+	}
+
+	if (retc)
+		m_log.msgBox(__func__, "SaveMesh started");
 
 	return retc;
 }
@@ -41,7 +74,7 @@ bool SaveMesh::stop(void)
 {
 	if (theSaveMesh.m_ui)
 	{
-		theSaveMesh.m_ui->messageBox("SaveMesh stopped");
+		m_log.msgBox(__func__, "SaveMesh stopped");
 		theSaveMesh.m_ui = nullptr;
 	}
 

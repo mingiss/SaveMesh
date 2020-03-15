@@ -24,5 +24,6 @@ private:
 
 public:
     bool init(Ptr<UserInterface> ui, char *app_name);
-    void msg(const char* str);
+    void msg(const char* func, const char* str);
+    void msgBox(const char* func, const char* str);
 };

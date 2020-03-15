@@ -96,7 +96,6 @@
     </ClCompile>
     <ClCompile Include="MeshSaver.cpp" />
     <ClCompile Include="SmLogger.cpp" />
-    <ClCompile Include="SmToolBox.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="SaveMesh.manifest">
@@ -108,7 +107,6 @@
     <ClInclude Include="MeshSaver.h" />
     <ClInclude Include="SaveMesh.h" />
     <ClInclude Include="SmLogger.h" />
-    <ClInclude Include="SmToolBox.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

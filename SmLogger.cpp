@@ -5,6 +5,9 @@
 #include <iostream> 
 #include <sstream>
 #include <fstream>
+#include <iomanip>
+#include <time.h>
+#include <sys/timeb.h>
 
 #include "SmLogger.h"
 
@@ -34,13 +37,32 @@ bool SmLogger::init(Ptr<UserInterface> ui, char* app_name)
     return retc;
 }
 
-void SmLogger::msg(const char* str)
+void SmLogger::msg(const char* func, const char* str)
 {
     if (*(m_sLogFname.c_str()))
     {
         ofstream log_file;
         log_file.open(m_sLogFname, ios::app);
-        log_file << str << endl;
+
+        struct _timeb tstruct;
+        _ftime(&tstruct);
+        time_t ltime;
+        time(&ltime);
+        struct tm today;
+        if (!_localtime64_s(&today, &ltime))
+        {
+            log_file << 1900 + today.tm_year << '-' << setfill('0') << setw(2) << today.tm_mon + 1 << '-' << setfill('0') << setw(2) << today.tm_mday << ' ';
+            log_file << setfill('0') << setw(2) << today.tm_hour << ':' << setfill('0') << setw(2) << today.tm_min << ':' << setfill('0') << setw(2) << today.tm_sec << '.';
+            log_file << setfill('0') << setw(3) << tstruct.millitm << ' ';
+        }
+
+        log_file << func << ": " << str << endl;
         log_file.close();
     }
+}
+
+void SmLogger::msgBox(const char* func, const char* str)
+{
+    msg(func, str);
+    m_ui->messageBox(str);
 }

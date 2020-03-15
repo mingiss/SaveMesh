@@ -23,5 +23,9 @@ private:
 
 public:
     bool init(Ptr<Application> app, Ptr<UserInterface> ui, SmLogger *plog);
-    bool saveActiveMesh(void);
+    bool saveActiveMesh(void); // searches for active document and calls writeMeshBody() for each found mesh
+    bool writeMeshBody(Ptr<MeshBody> mesh); // called from saveActiveMesh(); calls writePolygonMesh() or writeTriangleMesh()
+    bool writePolygonMesh(Ptr<PolygonMesh> poly_mesh); // called from writeMeshBody(); calls writePoints()
+    bool writeTriangleMesh(Ptr<TriangleMesh> tri_mesh); // called from writeMeshBody(); calls writePoints()
+    bool writePoints(vector<Ptr<Point3D>>* points); // called from writePolygonMesh() or writeTriangleMesh()
 };

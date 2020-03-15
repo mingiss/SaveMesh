@@ -68,8 +68,7 @@ bool SaveMesh::init()
 		}
 	}
 
-	if (retc)
-		m_log.msgBox(__func__, "SaveMesh started");
+	if (retc) m_log.msg(__func__, "SaveMesh started");
 
 	return retc;
 }

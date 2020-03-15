@@ -85,14 +85,14 @@ bool MeshSaver::writeTriangleMesh(Ptr<TriangleMesh> tri_mesh)
     if (retc)
     {
         points = tri_mesh->nodeCoordinates();
-        if (points.size() == 0)
+        if (points.size() > 0)
         {
-            m_plog->msg(__func__, "TriangleMesh is empty!");
-            retc = false;
+            m_plog->msg(__func__, "TriangleMesh:");
+            retc = writePoints(&points);
         }
+        else
+            m_plog->msg(__func__, "TriangleMesh is empty!");
     }
-
-    if (retc) retc = writePoints(&points);
 
     return retc;
 }
@@ -114,14 +114,14 @@ bool MeshSaver::writePolygonMesh(Ptr<PolygonMesh> poly_mesh)
     if (retc)
     {
         points = poly_mesh->nodeCoordinates();
-        if (points.size() == 0)
+        if (points.size() > 0)
         {
-            m_plog->msg(__func__, "PolygonMesh is empty!");
-            retc = false;
+            m_plog->msg(__func__, "PolygonMesh:");
+            retc = writePoints(&points);
         }
+        else
+            m_plog->msg(__func__, "PolygonMesh is empty!");
     }
-
-    if (retc) retc = writePoints(&points);
 
     return retc;
 }
@@ -146,16 +146,12 @@ bool MeshSaver::writeMeshBody(Ptr<MeshBody> mesh_body)
         m_plog->msg(__func__, "Looking for the PolygonMesh...");
         poly_mesh = mesh_body->mesh();
         if (!poly_mesh)
-        {
             m_plog->msg(__func__, "No PolygonMesh!");
 
-            tri_mesh = mesh_body->displayMesh();
-            if (!tri_mesh)
-            {
-                m_plog->msg(__func__, "No TriangleMesh!");
-                retc = false;
-            }
-        }
+        m_plog->msg(__func__, "Looking for the TriangleMesh...");
+        tri_mesh = mesh_body->displayMesh();
+        if (!tri_mesh)
+            m_plog->msg(__func__, "No TriangleMesh!");
     }
 
     if (retc && poly_mesh)

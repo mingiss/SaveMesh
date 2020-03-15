@@ -50,9 +50,9 @@ bool SaveMesh::init()
 			retc = false;
 	}
 
-	if (retc) retc = m_log.init(m_ui, "SaveMesh");
+	if (retc) retc = m_log.init(m_ui, APP_NAME);
 
-	if (retc) retc = m_saver.init(m_app, m_ui, &m_log);
+	if (retc) retc = m_saver.init(m_app, m_ui, &m_log, APP_NAME);
 
 //	if (retc) retc = theSmToolBoxHandler.init(theSaveMesh.m_ui);
 

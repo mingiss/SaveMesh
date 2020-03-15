@@ -3,7 +3,6 @@
  */
 
 #include <iostream> 
-#include <sstream>
 #include <fstream>
 #include <iomanip>
 #include <time.h>
@@ -25,14 +24,11 @@ bool SmLogger::init(Ptr<UserInterface> ui, char* app_name)
     if (retc)
     {
         // init log file
-        stringstream log_fname;
-        // log_fname << getenv("TEMP") << "/" << app_name << ".log";
-        log_fname << getenv("APPDATA") << "/Autodesk/Autodesk Fusion 360/API/AddIns/" << app_name << "/" << app_name << ".log";
-        m_sLogFname = log_fname.str();
+        // m_sLogFname = string() + getenv("TEMP") + "/" + app_name + ".log";
+        m_sLogFname = string() + getenv("APPDATA") + "/Autodesk/Autodesk Fusion 360/API/AddIns/" + app_name + "/" + app_name + ".log";
 
-        stringstream msg;
-        msg << "Logging to file " << m_sLogFname;
-        m_ui->messageBox(msg.str().c_str());
+        string msg = "Logging to file " + m_sLogFname;
+        m_ui->messageBox(msg.c_str());
     }
 
     return retc;
@@ -44,6 +40,11 @@ void SmLogger::msg(const char* func, const char* str)
     {
         ofstream log_file;
         log_file.open(m_sLogFname, ios::app);
+        if (log_file.bad() && m_ui)
+        {
+            string msg = "Error to open the file " + m_sLogFname + "!";
+            m_ui->messageBox(msg.c_str());
+        }
 
         struct _timeb tstruct;
         _ftime(&tstruct);

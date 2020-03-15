@@ -104,6 +104,7 @@
     </Text>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="GmshDefines.h" />
     <ClInclude Include="MeshSaver.h" />
     <ClInclude Include="SaveMesh.h" />
     <ClInclude Include="SmLogger.h" />

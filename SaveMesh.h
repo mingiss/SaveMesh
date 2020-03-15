@@ -15,6 +15,8 @@ using namespace adsk::core;
 using namespace adsk::fusion;
 using namespace adsk::cam;
 
+#define APP_NAME "SaveMesh"
+
 #define POLLING_TIMEOUT 3000
 
 class SaveMesh

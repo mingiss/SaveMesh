@@ -4,40 +4,37 @@
 
 #include <iostream> 
 #include <sstream>
+#include <fstream>
 
 #include "MeshSaver.h"
 
 
-bool MeshSaver::init(Ptr<Application> app, Ptr<UserInterface> ui, SmLogger *plog)
+bool MeshSaver::init(Ptr<Application> app, Ptr<UserInterface> ui, SmLogger *plog, char* app_name)
 {
     bool retc = true;
 
-    if (retc)
-    {
-        m_app = app;
-        if (!m_app)
-            retc = false;
-    }
+    m_app = app;
+    if (!m_app)
+        retc = false;
 
-    if (retc)
-    {
-        m_ui = ui;
-        if (!m_ui)
-            retc = false;
-    }
+    m_ui = ui;
+    if (!m_ui)
+        retc = false;
 
-    if (retc)
-    {
-        m_plog = plog;
-        if (!m_plog)
-            retc = false;
-    }
+    m_plog = plog;
+    if (!m_plog)
+        retc = false;
+
+    if (app_name)
+        m_sAppName = app_name;
+    else
+        retc = false;
 
     return retc;
 }
 
 
-bool MeshSaver::writePoints(vector<Ptr<Point3D>> *points)
+bool MeshSaver::writePoints(vector<Ptr<Point3D>> *points, char *fname)
 {
     bool retc = true;
 
@@ -49,7 +46,48 @@ bool MeshSaver::writePoints(vector<Ptr<Point3D>> *points)
         retc = false;
     }
 
+    if (retc && !fname)
+    {
+        m_plog->msg(__func__, "No .msh file name given!");
+        retc = false;
+    }
+
+    ofstream msh_file;
+    string sfname = string() + getenv("APPDATA") + "/Autodesk/Autodesk Fusion 360/API/AddIns/" + m_sAppName + "/" + fname + ".msh";
     if (retc)
+    {
+        msh_file.open(sfname, ios::out);
+        if (msh_file.bad())
+        {
+            string msg = "Error to open the file " + sfname + "!";
+            m_plog->msg(__func__, msg.c_str());
+            retc = false;
+        }
+    }
+
+    if (retc)
+    {
+        msh_file << "$MeshFormat" << endl;
+        msh_file << MSH_VERS << " " << MshFormats::ascii << " " << sizeof(size_t) << endl;
+        msh_file << "$EndMeshFormat" << endl;
+
+        msh_file << "$Nodes" << endl;
+        int num_of_points = points->size();
+        // entities header
+        msh_file << 1 // num of entities
+            << " " << num_of_points // num of nodes in all entities
+            << " " << 1 << " " << num_of_points // first and last tag
+            << endl;
+        // entity header
+        msh_file << 2 // num of dimensions
+            << " " << 1 // entity tag
+            << " " << false // no parametric coordinates
+            << " " << num_of_points // num of nodes in the entity
+            << endl;
+        // node tags
+        for (int ii = 0; ii < num_of_points; ii++)
+            msh_file << ii + 1 << endl;
+
         for (vector<Ptr<Point3D>>::iterator it = points->begin(); (it != points->end()) && retc; it++)
         {
             vector<double> coords = (*it)->asArray();
@@ -60,12 +98,38 @@ bool MeshSaver::writePoints(vector<Ptr<Point3D>> *points)
             }
             if (retc)
             {
-                m_plog->msg(__func__, "Point:");
                 for (vector<double>::iterator id = coords.begin(); (id != coords.end()) && retc; id++)
-                    m_plog->msg(__func__, to_string(*id).c_str());
+                    msh_file << *id << " ";
+                msh_file << endl;
             }
         }
 
+        msh_file << "$EndNodes" << endl;
+    }
+
+    if (retc && msh_file.bad())
+    {
+        string msg = "Error writing to the file " + sfname + "!";
+        m_plog->msg(__func__, msg.c_str());
+        retc = false;
+    }
+
+    if (retc)
+    {
+        msh_file.close();
+        if (msh_file.bad())
+        {
+            string msg = "Error closing the file " + sfname + "!";
+            m_plog->msg(__func__, msg.c_str());
+            retc = false;
+        }
+        else
+        {
+            string msg = "Mesh saved to the file " + sfname + ".";
+            m_plog->msg(__func__, msg.c_str());
+        }
+    }
+        
     return retc;
 }
     
@@ -88,7 +152,7 @@ bool MeshSaver::writeTriangleMesh(Ptr<TriangleMesh> tri_mesh)
         if (points.size() > 0)
         {
             m_plog->msg(__func__, "TriangleMesh:");
-            retc = writePoints(&points);
+            retc = writePoints(&points, "SaveMesh_triangle");
         }
         else
             m_plog->msg(__func__, "TriangleMesh is empty!");
@@ -117,7 +181,7 @@ bool MeshSaver::writePolygonMesh(Ptr<PolygonMesh> poly_mesh)
         if (points.size() > 0)
         {
             m_plog->msg(__func__, "PolygonMesh:");
-            retc = writePoints(&points);
+            retc = writePoints(&points, "SaveMesh_polygon");
         }
         else
             m_plog->msg(__func__, "PolygonMesh is empty!");

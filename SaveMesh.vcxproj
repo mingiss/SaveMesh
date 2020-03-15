@@ -95,7 +95,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="MeshSaver.cpp" />
-    <ClCompile Include="SmFileMenu.cpp" />
     <ClCompile Include="SmLogger.cpp" />
   </ItemGroup>
   <ItemGroup>

@@ -29,8 +29,8 @@ public:
 	MeshSaver m_saver;
 	SmLogger m_log;
 	
-	int m_iPollCnt = 0;
-	bool m_bPollThreadSemaphore = true; // false -- the thread should end
+	volatile int m_iPollCnt = 0;
+	volatile bool m_bPollThreadSemaphore = true; // false -- the thread should end
 
 	Ptr<Application> m_app = nullptr;
 	Ptr<UserInterface> m_ui = nullptr;

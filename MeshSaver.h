@@ -8,6 +8,7 @@
 #include <Fusion/FusionAll.h>
 #include <CAM/CAMAll.h>
 
+#include "GmshDefines.h"
 #include "SmLogger.h"
 
 using namespace adsk::core;
@@ -21,6 +22,8 @@ enum MshFormats
     ascii,  // 0
     bin     // 1
 };
+
+extern int ElemSizes[MSH_MAX_NUM + 1];
 
 class MeshSaver
 {
@@ -36,5 +39,5 @@ public:
     bool writeMeshBody(Ptr<MeshBody> mesh); // called from saveActiveMesh(); calls writePolygonMesh() or writeTriangleMesh()
     bool writePolygonMesh(Ptr<PolygonMesh> poly_mesh); // called from writeMeshBody(); calls writePoints()
     bool writeTriangleMesh(Ptr<TriangleMesh> tri_mesh); // called from writeMeshBody(); calls writePoints()
-    bool writePoints(vector<Ptr<Point3D>>* points, char* fname); // called from writePolygonMesh() or writeTriangleMesh(); fname -- .msh file name without a path nor extension
+    bool writePoints(vector<Ptr<Point3D>> *p_points, vector<int> *p_triangles, vector<int> *p_quads, vector<int> *p_polygons, char *fname); // called from writePolygonMesh() or writeTriangleMesh(); fname -- .msh file name without a path nor extension
 };

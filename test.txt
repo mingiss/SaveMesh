@@ -14,4 +14,6 @@ Testing procedure:
     - Add-Ins tab
     - SaveMesh
     - Run
+- after ~6 sec close the Fusion
      
+SaveMesh_polygon.msh and SaveMesh_triangle.msh should be renewed, but unchanged

@@ -44,8 +44,16 @@ private:
     SmLogger *m_plog = nullptr;
     string m_sAppName;
 
-    MeshFile m_TriMeshFile;
-    MeshFile m_PolyMeshFile;
+    MeshFile m_TriMeshFile; // file for TriangleMesh'es
+    MeshFile m_PolyMeshFile; // file for PolygonMesh'es
+
+    size_t m_iMeshCount = 0; // number of MeshBody'es
+    int m_iNumOfTriPoints = 0; // total number of points (nodes) in all TriangleMesh'es
+    int m_iNumOfPolyPoints = 0; // total number of points (nodes) in all PolygonMesh'es
+    int m_iNumOfTriElemChunks = 0; // total number of triangle vectors in all TriangleMesh'es
+    int m_iNumOfPolyElemChunks = 0; // total number of triangle, quad and pollygon vectors in all TriangleMesh'es
+    int m_iNumOfTriElems = 0; // total number of polygons (elements) in all TriangleMesh'es
+    int m_iNumOfPolyElems = 0; // total number of polygons (elements) in all PolygonMesh'es
 
 public:
     // all return values: true in case of success, false -- error
@@ -76,6 +84,15 @@ public:
     bool writePolygonMesh(Ptr<PolygonMesh> poly_mesh); // called from writeMeshBody(); calls writePoints()
     bool writeTriangleMesh(Ptr<TriangleMesh> tri_mesh); // called from writeMeshBody(); calls writePoints()
     
+    bool countMeshBody(Ptr<MeshBody> mesh); // called from saveActiveMesh(); calls countPolygonMesh() or countTriangleMesh()
+    bool countPolygonMesh(Ptr<PolygonMesh> poly_mesh); // called from countMeshBody()
+    bool countTriangleMesh(Ptr<TriangleMesh> tri_mesh); // called from countMeshBody()
+
+    // called from saveActiveMesh(); 
+    // num_of_points -- either m_iNumOfTriPoints or m_iNumOfPolyPoints
+    // msh_file -- reference to either m_fTriMeshFile or m_fPolyMeshFile
+    bool writeNodeHeader(int num_of_points, MeshFile& msh_file);
+
     // called from writePolygonMesh() or writeTriangleMesh()
     // msh_file -- reference to either m_fTriMeshFile or m_fPolyMeshFile
     bool writePoints(vector<Ptr<Point3D>>& points, vector<int>& triangles, vector<int>& quads, vector<int>& polygons, MeshFile& msh_file);

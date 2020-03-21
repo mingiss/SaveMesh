@@ -254,15 +254,21 @@ bool MeshSaver::closeMeshFiles(void)
     m_TriMeshFile.m_sMeshFName.clear();
     m_PolyMeshFile.m_sMeshFName.clear();
 
+    m_iMeshCount = 0;
+    m_iNumOfTriPoints = 0;
+    m_iNumOfPolyPoints = 0;
+    m_iNumOfTriElems = 0;
+    m_iNumOfPolyElems = 0;
+
     return retc;
 }
 
 
-bool MeshSaver::writePoints(vector<Ptr<Point3D>>& points, vector<int>& triangles, vector<int>& quads, vector<int>& polygons, MeshFile& msh_file)
+bool MeshSaver::writeNodeHeader(int num_of_points, MeshFile& msh_file)
 {
     bool retc = true;
 
-    if (retc) if (!m_plog) retc = false;
+    // TODO: check whether the file msh_file is open
 
     if (retc)
     {
@@ -271,12 +277,29 @@ bool MeshSaver::writePoints(vector<Ptr<Point3D>>& points, vector<int>& triangles
         msh_file.m_fMeshFile << "$EndMeshFormat" << endl;
 
         msh_file.m_fMeshFile << "$Nodes" << endl;
-        size_t num_of_points = points.size();
+
         // entities header
-        msh_file.m_fMeshFile << 1 // num of entities
+        msh_file.m_fMeshFile << m_iMeshCount // num of entities
             << " " << num_of_points // num of nodes in all entities
             << " " << 1 << " " << num_of_points // first and last tag
             << endl;
+    }
+
+    return retc;
+}
+
+bool MeshSaver::writePoints(vector<Ptr<Point3D>>& points, vector<int>& triangles, vector<int>& quads, vector<int>& polygons, MeshFile& msh_file)
+{
+    bool retc = true;
+
+    if (retc) if (!m_plog) retc = false;
+
+    // TODO: check whether the file msh_file is open
+
+    if (retc)
+    {
+        size_t num_of_points = points.size();
+
         // entity header
         msh_file.m_fMeshFile << 2 // num of dimensions
             << " " << 1 // entity tag
@@ -493,6 +516,181 @@ bool MeshSaver::writeMeshBody(Ptr<MeshBody> mesh_body)
 }
 
 
+bool MeshSaver::countTriangleMesh(Ptr<TriangleMesh> tri_mesh)
+{
+    bool retc = true;
+
+    if (retc) if (!m_plog) retc = false;
+
+    if (retc && !tri_mesh)
+    {
+        m_plog->msg(__func__, "No TriangleMesh ptr given!");
+        retc = false;
+    }
+
+    if (retc)
+    {
+        vector<Ptr<Point3D>> points = tri_mesh->nodeCoordinates();
+        size_t num_of_coords = points.size();
+
+        int num_of_points = tri_mesh->nodeCount(); // erroneously returns count of triangle vertices
+        m_iNumOfTriPoints += num_of_coords; //  num_of_points;
+        stringstream out_str;
+        out_str << "TriangleMesh points: " << num_of_points;
+        m_plog->msg(__func__, out_str.str().c_str());
+
+        if (num_of_coords != num_of_points)
+        {
+            stringstream out_str;
+            out_str << "TriangleMesh points count conflict: " << num_of_coords;
+            m_plog->msg(__func__, out_str.str().c_str());
+        }
+    }
+
+    if (retc)
+    {
+        int num_of_triangles = tri_mesh->triangleCount();
+        m_iNumOfTriElems += num_of_triangles;
+
+        vector<int> triangles = tri_mesh->nodeIndices();
+        size_t num_of_vertices = triangles.size();
+
+        stringstream out_str;
+        out_str << "TriangleMesh triangles: " << num_of_triangles << "  vertices: " << num_of_vertices;
+        m_plog->msg(__func__, out_str.str().c_str());
+
+        if (num_of_vertices != num_of_triangles * ElemSizes[MSH_TRI_3])
+            m_plog->msg(__func__, "TriangleMesh triangles vertex count conflict!");
+    }
+
+    return retc;
+}
+
+
+bool MeshSaver::countPolygonMesh(Ptr<PolygonMesh> poly_mesh)
+{
+    bool retc = true;
+
+    if (retc) if (!m_plog) retc = false;
+
+    if (retc && !poly_mesh)
+    {
+        m_plog->msg(__func__, "No PolygonMesh ptr given!");
+        retc = false;
+    }
+
+    if (retc)
+    {
+        vector<Ptr<Point3D>> points = poly_mesh->nodeCoordinates();
+        size_t num_of_coords = points.size();
+
+        int num_of_points = poly_mesh->nodeCount();
+        m_iNumOfPolyPoints += num_of_points;
+        stringstream out_str;
+        out_str << "PolygonMesh points: " << num_of_points;
+        m_plog->msg(__func__, out_str.str().c_str());
+
+        if (num_of_coords != num_of_points)
+        {
+            stringstream out_str;
+            out_str << "PolygonMesh points count conflict: " << num_of_coords;
+            m_plog->msg(__func__, out_str.str().c_str());
+        }
+    }
+
+    if (retc)
+    {
+        int num_of_triangles = poly_mesh->triangleCount();
+        m_iNumOfPolyElems += num_of_triangles;
+
+        vector<int> triangles = poly_mesh->triangleNodeIndices();
+        size_t num_of_vertices = triangles.size();
+
+        stringstream out_str;
+        out_str << "PolygonMesh triangles: " << num_of_triangles << "  vertices: " << num_of_vertices;
+        m_plog->msg(__func__, out_str.str().c_str());
+
+        if (num_of_vertices != num_of_triangles * ElemSizes[MSH_TRI_3])
+            m_plog->msg(__func__, "TriangleMesh triangles vertex count conflict!");
+    }
+
+    if (retc)
+    {
+        int num_of_quads = poly_mesh->quadCount();
+        m_iNumOfPolyElems += num_of_quads;
+
+        vector<int> quads = poly_mesh->quadNodeIndices();
+        size_t num_of_vertices = quads.size();
+
+        stringstream out_str;
+        out_str << "PolygonMesh quads: " << num_of_quads << "  vertices: " << num_of_vertices;
+        m_plog->msg(__func__, out_str.str().c_str());
+
+        if (num_of_vertices != num_of_quads * ElemSizes[MSH_QUA_4])
+            m_plog->msg(__func__, "TriangleMesh quadss vertex count conflict!");
+    }
+
+    if (retc)
+    {
+        int num_of_polygons = poly_mesh->polygonCount();
+        m_iNumOfPolyElems += num_of_polygons;
+
+        vector<int> polygons = poly_mesh->polygonNodeIndices();
+        size_t num_of_vertices = polygons.size();
+
+        stringstream out_str;
+        out_str << "PolygonMesh polygons: " << num_of_polygons << "  vertices: " << num_of_vertices;
+        m_plog->msg(__func__, out_str.str().c_str());
+
+        if (num_of_polygons > 0)
+        {
+            stringstream out_str;
+            out_str << "PolygonMesh polygons vertice factor: " << (double)num_of_vertices / num_of_polygons << "  ElemSizes[MSH_TET_4]: " << ElemSizes[MSH_TET_4];
+            m_plog->msg(__func__, out_str.str().c_str());
+        }
+    }
+
+    return retc;
+}
+
+
+bool MeshSaver::countMeshBody(Ptr<MeshBody> mesh_body)
+{
+    bool retc = true;
+
+    if (retc) if (!m_plog) retc = false;
+
+    if (retc && !mesh_body)
+    {
+        m_plog->msg(__func__, "No MeshBody ptr given!");
+        retc = false;
+    }
+
+    Ptr<PolygonMesh> poly_mesh = nullptr;
+    Ptr<TriangleMesh> tri_mesh = nullptr;
+    if (retc)
+    {
+        m_plog->msg(__func__, "Looking for the PolygonMesh...");
+        poly_mesh = mesh_body->mesh();
+        if (!poly_mesh)
+            m_plog->msg(__func__, "No PolygonMesh!");
+
+        m_plog->msg(__func__, "Looking for the TriangleMesh...");
+        tri_mesh = mesh_body->displayMesh();
+        if (!tri_mesh)
+            m_plog->msg(__func__, "No TriangleMesh!");
+    }
+
+    if (retc && poly_mesh)
+        retc = countPolygonMesh(poly_mesh);
+
+    if (retc && tri_mesh)
+        retc = countTriangleMesh(tri_mesh);
+
+    return retc;
+}
+
+
 bool MeshSaver::saveActiveMesh(void)
 {
     bool retc = true;
@@ -587,13 +785,49 @@ bool MeshSaver::saveActiveMesh(void)
 
         if (retc)
         {
+            m_plog->msg(__func__, "Calculating entities count...");
+            m_iMeshCount = meshes->count();
+
+            for (int ii = 0; (ii < m_iMeshCount) && retc; ii++)
+            {
+                Ptr<MeshBody> mesh_body = meshes->item(ii);
+                if (mesh_body)
+                {
+                    stringstream out_str;
+                    out_str << "The mesh " << ii << " (" << mesh_body->name() << ") counts: " << endl;
+                    m_plog->msg(__func__, out_str.str().c_str());
+                    retc = countMeshBody(mesh_body);
+                }
+                else
+                {
+                    stringstream out_str;
+                    out_str << "No mesh body " << ii << "!" << endl;
+                    m_plog->msg(__func__, out_str.str().c_str());
+                    retc = false;
+                }
+            }
+        }
+
+        if ((m_iMeshCount == 0) && (m_iNumOfTriPoints == 0) && (m_iNumOfPolyPoints == 0) && 
+            (m_iNumOfTriElemChunks == 0) && (m_iNumOfPolyElemChunks == 0) && (m_iNumOfTriElems == 0) && (m_iNumOfPolyElems == 0))
+        {
+            m_plog->msg(__func__, "The mesh is empty!"); // could happen, when Fusion 360 is already being closed
+            retc = false;
+        }
+
+        if (retc)
+        {
             retc = openMeshFiles();
+
+            if (retc) retc = writeNodeHeader(m_iNumOfTriPoints, m_TriMeshFile);
+
+            if (retc) retc = writeNodeHeader(m_iNumOfPolyPoints, m_PolyMeshFile);
 
             if (retc)
             {
                 m_plog->msg(__func__, "Writing meshes...");
 
-                for (int ii = 0; (ii < meshes->count()) && retc; ii++)
+                for (int ii = 0; (ii < m_iMeshCount) && retc; ii++)
                 {
                     Ptr<MeshBody> mesh_body = meshes->item(ii);
                     if (mesh_body)

@@ -2,10 +2,6 @@
  * SaveMesh plug-in mesh saving feature
  */
 
-#include <iostream> 
-#include <sstream>
-#include <fstream>
-
 #include "MeshSaver.h"
 
 
@@ -190,61 +186,108 @@ bool MeshSaver::init(Ptr<Application> app, Ptr<UserInterface> ui, SmLogger *plog
 }
 
 
-bool MeshSaver::writePoints(vector<Ptr<Point3D>> *p_points, vector<int> *p_triangles, vector<int> *p_quads, vector<int> *p_polygons, char *fname)
+bool MeshSaver::openMeshFile(MeshFile& msh_file)
 {
     bool retc = true;
 
-    if (retc) if (!m_plog) retc = false;
-
-    if (retc && !p_points)
-    {
-        m_plog->msg(__func__, "No points vector ptr given!");
-        retc = false;
-    }
-
-    if (retc && !fname)
-    {
-        m_plog->msg(__func__, "No .msh file name given!");
-        retc = false;
-    }
-
-    ofstream msh_file;
-    string sfname = string() + getenv("APPDATA") + "/Autodesk/Autodesk Fusion 360/API/AddIns/" + m_sAppName + "/" + fname + ".msh";
     if (retc)
     {
-        msh_file.open(sfname, ios::out);
-        if (msh_file.bad())
+        msh_file.m_fMeshFile.open(msh_file.m_sMeshFName, ios::out);
+        if (msh_file.m_fMeshFile.bad())
         {
-            string msg = "Error to open the file " + sfname + "!";
+            string msg = "Error to open the file " + msh_file.m_sMeshFName + "!";
             m_plog->msg(__func__, msg.c_str());
             retc = false;
         }
     }
 
+    return retc;
+}
+
+
+bool MeshSaver::openMeshFiles(void)
+{
+    bool retc = true;
+
+    string spath = string() + getenv("APPDATA") + "/Autodesk/Autodesk Fusion 360/API/AddIns/" + m_sAppName + "/" + m_sAppName + "_";
+    m_TriMeshFile.m_sMeshFName = spath + "triangle" + ".msh";
+    m_PolyMeshFile.m_sMeshFName = spath + "polygon" + ".msh";
+
+    if (retc) retc = openMeshFile(m_TriMeshFile);
+    if (retc) retc = openMeshFile(m_PolyMeshFile);
+
+    return retc;
+}
+
+
+bool MeshSaver::closeMeshFile(MeshFile& msh_file)
+{
+    bool retc = true;
+
     if (retc)
     {
-        msh_file << "$MeshFormat" << endl;
-        msh_file << MSH_VERS << " " << MshFormats::ascii << " " << sizeof(size_t) << endl;
-        msh_file << "$EndMeshFormat" << endl;
+        msh_file.m_fMeshFile.close();
+        if (msh_file.m_fMeshFile.bad())
+        {
+            string msg = "Error closing the file " + msh_file.m_sMeshFName + "!";
+            m_plog->msg(__func__, msg.c_str());
+            retc = false;
+        }
+        else
+        {
+            string msg = "Mesh saved to the file " + msh_file.m_sMeshFName + ".";
+            m_plog->msg(__func__, msg.c_str());
+        }
+    }
 
-        msh_file << "$Nodes" << endl;
-        size_t num_of_points = p_points->size();
+    return retc;
+}
+
+
+bool MeshSaver::closeMeshFiles(void)
+{
+    bool retc = true;
+
+    if (retc) retc = closeMeshFile(m_TriMeshFile);
+    if (retc) retc = closeMeshFile(m_PolyMeshFile);
+
+    m_TriMeshFile.m_sMeshFName.clear();
+    m_PolyMeshFile.m_sMeshFName.clear();
+
+    return retc;
+}
+
+
+bool MeshSaver::writePoints(vector<Ptr<Point3D>>& points, vector<int>& triangles, vector<int>& quads, vector<int>& polygons, MeshFile& msh_file)
+{
+    bool retc = true;
+
+    if (retc) if (!m_plog) retc = false;
+
+    if (retc)
+    {
+        msh_file.m_fMeshFile << "$MeshFormat" << endl;
+        msh_file.m_fMeshFile << MSH_VERS << " " << MshFormats::ascii << " " << sizeof(size_t) << endl;
+        msh_file.m_fMeshFile << "$EndMeshFormat" << endl;
+
+        msh_file.m_fMeshFile << "$Nodes" << endl;
+        size_t num_of_points = points.size();
         // entities header
-        msh_file << 1 // num of entities
+        msh_file.m_fMeshFile << 1 // num of entities
             << " " << num_of_points // num of nodes in all entities
             << " " << 1 << " " << num_of_points // first and last tag
             << endl;
         // entity header
-        msh_file << 2 // num of dimensions
+        msh_file.m_fMeshFile << 2 // num of dimensions
             << " " << 1 // entity tag
             << " " << false // no parametric coordinates
             << " " << num_of_points // num of nodes in the entity
             << endl;
         // node tags
         for (size_t ii = 0; ii < num_of_points; ii++)
-            msh_file << ii + 1 << endl;
+            msh_file.m_fMeshFile << ii + 1 << endl;
 
-        for (vector<Ptr<Point3D>>::iterator it = p_points->begin(); (it != p_points->end()) && retc; it++)
+        for (vector<Ptr<Point3D>>::iterator it = points.begin(); (it != points.end()) && retc; it++)
         {
             vector<double> coords = (*it)->asArray();
             if (coords.size() == 0)
@@ -255,22 +298,22 @@ bool MeshSaver::writePoints(vector<Ptr<Point3D>> *p_points, vector<int> *p_trian
             if (retc)
             {
                 for (vector<double>::iterator id = coords.begin(); (id != coords.end()) && retc; id++)
-                    msh_file << *id << " ";
-                msh_file << endl;
+                    msh_file.m_fMeshFile << *id << " ";
+                msh_file.m_fMeshFile << endl;
             }
         }
 
-        msh_file << "$EndNodes" << endl;
+        msh_file.m_fMeshFile << "$EndNodes" << endl;
 
-        msh_file << "$Elements" << endl;
-        size_t num_of_triangles = p_triangles->size() / ElemSizes[MSH_TRI_3];
-        size_t num_of_quads = 0; // p_quads->size() / ElemSizes[MSH_QUA_4];
-        size_t num_of_polygons = 0; // p_polygons->size() / ElemSizes[MSH_TET_4]; ???
+        msh_file.m_fMeshFile << "$Elements" << endl;
+        size_t num_of_triangles = triangles.size() / ElemSizes[MSH_TRI_3];
+        size_t num_of_quads = 0; // quads.size() / ElemSizes[MSH_QUA_4];
+        size_t num_of_polygons = 0; // polygons.size() / ElemSizes[MSH_TET_4]; ???
         size_t num_of_elems = num_of_triangles + num_of_quads + num_of_polygons;
         int id = 0; // tag of the current element
 
         // entities header
-        msh_file << 1 // num of entities
+        msh_file.m_fMeshFile << 1 // num of entities
             << " " << num_of_elems // num of elems in all entities
             << " " << 1 << " " << num_of_elems // first and last tag
             << endl;
@@ -278,48 +321,32 @@ bool MeshSaver::writePoints(vector<Ptr<Point3D>> *p_points, vector<int> *p_trian
         // triangles entity
         int elem_type = MSH_TRI_3;
         int elem_size = ElemSizes[elem_type];
-        msh_file << 2 // num of dimensions
+        msh_file.m_fMeshFile << 2 // num of dimensions
             << " " << 1 // entity tag
             << " " << elem_type // triangles
             << " " << num_of_elems << endl;
 
         int ix = 0;
-        for (vector<int>::iterator it = p_triangles->begin(); (it != p_triangles->end()) && retc; it++)
+        for (vector<int>::iterator it = triangles.begin(); (it != triangles.end()) && retc; it++)
         {
             if (ix % elem_size == 0)
-                msh_file << ++id; // elem tag
-            msh_file << " " << *it + 1;
+                msh_file.m_fMeshFile << ++id; // elem tag
+            msh_file.m_fMeshFile << " " << *it + 1;
             if (ix % elem_size == elem_size - 1)
-                msh_file << endl;
+                msh_file.m_fMeshFile << endl;
             ix++;
         }
 
-        msh_file << "$EndElements" << endl;
+        msh_file.m_fMeshFile << "$EndElements" << endl;
     }
 
-    if (retc && msh_file.bad())
+    if (retc && msh_file.m_fMeshFile.bad())
     {
-        string msg = "Error writing to the file " + sfname + "!";
+        string msg = "Error writing to the file " + msh_file.m_sMeshFName + "!";
         m_plog->msg(__func__, msg.c_str());
         retc = false;
     }
 
-    if (retc)
-    {
-        msh_file.close();
-        if (msh_file.bad())
-        {
-            string msg = "Error closing the file " + sfname + "!";
-            m_plog->msg(__func__, msg.c_str());
-            retc = false;
-        }
-        else
-        {
-            string msg = "Mesh saved to the file " + sfname + ".";
-            m_plog->msg(__func__, msg.c_str());
-        }
-    }
-        
     return retc;
 }
     
@@ -353,7 +380,7 @@ bool MeshSaver::writeTriangleMesh(Ptr<TriangleMesh> tri_mesh)
     if (retc)
     {
         m_plog->msg(__func__, "TriangleMesh:");
-        retc = writePoints(&points, &triangles, &quads, &polygons, "SaveMesh_triangle");
+        retc = writePoints(points, triangles, quads, polygons, m_TriMeshFile);
     }
 
     return retc;
@@ -422,7 +449,7 @@ bool MeshSaver::writePolygonMesh(Ptr<PolygonMesh> poly_mesh)
     if (retc)
     {
         m_plog->msg(__func__, "PolygonMesh:");
-        retc = writePoints(&points, &triangles, &quads, &polygons, "SaveMesh_polygon");
+        retc = writePoints(points, triangles, quads, polygons, m_PolyMeshFile);
     }
 
     return retc;
@@ -560,21 +587,28 @@ bool MeshSaver::saveActiveMesh(void)
 
         if (retc)
         {
-            m_plog->msg(__func__, "Writing meshes...");
+            retc = openMeshFiles();
 
-            for (int ii = 0; (ii < meshes->count()) && retc; ii++)
+            if (retc)
             {
-                Ptr<MeshBody> mesh_body = meshes->item(ii);
-                if (mesh_body)
+                m_plog->msg(__func__, "Writing meshes...");
+
+                for (int ii = 0; (ii < meshes->count()) && retc; ii++)
                 {
-                    stringstream out_str;
-                    out_str << "The mesh " << ii << ": " << mesh_body->name() << endl;
-                    m_plog->msg(__func__, out_str.str().c_str());
-                    retc = writeMeshBody(mesh_body);
+                    Ptr<MeshBody> mesh_body = meshes->item(ii);
+                    if (mesh_body)
+                    {
+                        stringstream out_str;
+                        out_str << "The mesh " << ii << ": " << mesh_body->name() << endl;
+                        m_plog->msg(__func__, out_str.str().c_str());
+                        retc = writeMeshBody(mesh_body);
+                    }
+                    else
+                        retc = false;
                 }
-                else
-                    retc = false;
             }
+
+            retc &= closeMeshFiles();
         }
     }
 

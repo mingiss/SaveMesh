@@ -1,0 +1,17 @@
+Testing procedure:
+
+- start Fusion 360
+- open the file "1.71_1.78_1.85 GHz_Single Element.step"
+- generate the mesh with 20 mm grid:
+    - MESH tab
+    - "BRep to Mesh" (the second button on the toolbar)
+    - click the cube
+    - "Maximum edge length" -- enter slider value "20 mm" using the keyboard
+    - OK
+- start the plug-in SaveMesh:
+    - TOOLS tab
+    - ADD-INS (the second buton on the toolbar)
+    - Add-Ins tab
+    - SaveMesh
+    - Run
+     

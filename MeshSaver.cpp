@@ -259,6 +259,8 @@ bool MeshSaver::closeMeshFiles(void)
     m_PolyMeshFile.m_sMeshFName.clear();
 
     m_iMeshCount = 0;
+    m_iNumOfTriPointChunks = 0;
+    m_iNumOfPolyPointChunks = 0;
     m_iNumOfTriPoints = 0;
     m_iNumOfPolyPoints = 0;
     m_iNumOfTriElemChunks = 0;
@@ -270,7 +272,7 @@ bool MeshSaver::closeMeshFiles(void)
 }
 
 
-bool MeshSaver::writeNodeHeader(/* int */ size_t num_of_points, MeshFile& msh_file)
+bool MeshSaver::writeNodeHeader(int num_of_entities, /* int */ size_t num_of_points, MeshFile& msh_file)
 {
     bool retc = true;
 
@@ -285,7 +287,7 @@ bool MeshSaver::writeNodeHeader(/* int */ size_t num_of_points, MeshFile& msh_fi
         msh_file.m_fMeshFile << "$Nodes" << endl;
 
         // entities header
-        msh_file.m_fMeshFile << m_iMeshCount // num of entities
+        msh_file.m_fMeshFile << num_of_entities // num of entities
             << " " << num_of_points // num of nodes in all entities
             << " " << 1 << " " << num_of_points // first and last tag
             << endl;
@@ -295,7 +297,7 @@ bool MeshSaver::writeNodeHeader(/* int */ size_t num_of_points, MeshFile& msh_fi
 }
 
 
-bool MeshSaver::writeElemsHeader(int num_of_elems, int num_of_entities, MeshFile& msh_file)
+bool MeshSaver::writeElemsHeader(int num_of_entities, int num_of_elems, MeshFile& msh_file)
 {
     bool retc = true;
 
@@ -315,7 +317,7 @@ bool MeshSaver::writeElemsHeader(int num_of_elems, int num_of_entities, MeshFile
 }
 
 
-bool MeshSaver::writePoints(vector<Ptr<Point3D>>& points, MeshFile& msh_file)
+bool MeshSaver::writePoints(vector<Ptr<Point3D>>& points, int& entity_tag, int& point_tag, MeshFile& msh_file)
 {
     bool retc = true;
 
@@ -329,13 +331,13 @@ bool MeshSaver::writePoints(vector<Ptr<Point3D>>& points, MeshFile& msh_file)
 
         // entity header
         msh_file.m_fMeshFile << 2 // num of dimensions
-            << " " << 1 // entity tag
+            << " " << entity_tag++
             << " " << false // no parametric coordinates
             << " " << num_of_points // num of nodes in the entity
             << endl;
         // node tags
         for (size_t ii = 0; ii < num_of_points; ii++)
-            msh_file.m_fMeshFile << ii + 1 << endl;
+            msh_file.m_fMeshFile << point_tag++ << endl;
 
         for (vector<Ptr<Point3D>>::iterator it = points.begin(); (it != points.end()) && retc; it++)
         {
@@ -382,7 +384,7 @@ bool MeshSaver::writeTriangleMeshPoints(Ptr<TriangleMesh> tri_mesh)
     if (retc)
     {
         m_plog->msg(__func__, "Writing TriangleMesh points...");
-        retc = writePoints(points, m_TriMeshFile);
+        retc = writePoints(points, m_iTriEntityTag, m_iTriPointTag, m_TriMeshFile);
     }
 
     return retc;
@@ -407,7 +409,7 @@ bool MeshSaver::writePolygonMeshPoints(Ptr<PolygonMesh> poly_mesh)
     if (retc)
     {
         m_plog->msg(__func__, "Writing PolygonMesh points...");
-        retc = writePoints(points, m_PolyMeshFile);
+        retc = writePoints(points, m_iPolyEntityTag, m_iPolyPointTag, m_PolyMeshFile);
     }
 
     return retc;
@@ -451,7 +453,7 @@ bool MeshSaver::writeMeshBodyPoints(Ptr<MeshBody> mesh_body)
 }
 
 
-bool MeshSaver::writeElems(vector<int>& triangles, vector<int>& quads, vector<int>& polygons, MeshFile& msh_file)
+bool MeshSaver::writeElems(vector<int>& triangles, vector<int>& quads, vector<int>& polygons, int& entity_tag, int& elem_tag, MeshFile& msh_file)
 {
     bool retc = true;
 
@@ -465,13 +467,11 @@ bool MeshSaver::writeElems(vector<int>& triangles, vector<int>& quads, vector<in
         // size_t num_of_quads = quads.size() / ElemSizes[MSH_QUA_4];
         // size_t num_of_polygons = polygons.size() / ElemSizes[MSH_TET_4]; ???
 
-        int id = 0; // tag of the current element
-
         // triangles entity
         int elem_type = MSH_TRI_3;
         int elem_size = ElemSizes[elem_type];
         msh_file.m_fMeshFile << 2 // num of dimensions
-            << " " << 1 // entity tag
+            << " " << entity_tag++
             << " " << elem_type // triangles
             << " " << num_of_triangles << endl;
 
@@ -479,7 +479,7 @@ bool MeshSaver::writeElems(vector<int>& triangles, vector<int>& quads, vector<in
         for (vector<int>::iterator it = triangles.begin(); (it != triangles.end()) && retc; it++)
         {
             if (ix % elem_size == 0)
-                msh_file.m_fMeshFile << ++id; // elem tag
+                msh_file.m_fMeshFile << elem_tag++;
             msh_file.m_fMeshFile << " " << *it + 1;
             if (ix % elem_size == elem_size - 1)
                 msh_file.m_fMeshFile << endl;
@@ -518,7 +518,7 @@ bool MeshSaver::writeTriangleMeshElems(Ptr<TriangleMesh> tri_mesh)
     if (retc)
     {
         m_plog->msg(__func__, "Writing TriangleMesh elems...");
-        retc = writeElems(triangles, quads, polygons, m_TriMeshFile);
+        retc = writeElems(triangles, quads, polygons, m_iTriEntityTag, m_iTriElemTag, m_TriMeshFile);
     }
 
     return retc;
@@ -549,7 +549,7 @@ bool MeshSaver::writePolygonMeshElems(Ptr<PolygonMesh> poly_mesh)
     if (retc)
     {
         m_plog->msg(__func__, "Write PolygonMesh elems...");
-        retc = writeElems(triangles, quads, polygons, m_PolyMeshFile);
+        retc = writeElems(triangles, quads, polygons, m_iPolyEntityTag, m_iPolyElemTag, m_PolyMeshFile);
     }
 
     return retc;
@@ -609,7 +609,10 @@ bool MeshSaver::countTriangleMesh(Ptr<TriangleMesh> tri_mesh)
     {
         vector<Ptr<Point3D>> points = tri_mesh->nodeCoordinates();
         size_t num_of_coords = points.size();
-        if (num_of_coords == 0)
+
+        if (num_of_coords > 0)
+            m_iNumOfTriPointChunks++;
+        else
             m_plog->msg(__func__, "TriangleMesh has no points!");
 
         int num_of_points = tri_mesh->nodeCount(); // erroneously returns count of triangle vertices
@@ -667,7 +670,10 @@ bool MeshSaver::countPolygonMesh(Ptr<PolygonMesh> poly_mesh)
     {
         vector<Ptr<Point3D>> points = poly_mesh->nodeCoordinates();
         size_t num_of_coords = points.size();
-        if (num_of_coords == 0)
+
+        if (num_of_coords > 0)
+            m_iNumOfPolyPointChunks++;
+        else
             m_plog->msg(__func__, "PolygonMesh has no points!");
 
         int num_of_points = poly_mesh->nodeCount();
@@ -909,7 +915,7 @@ bool MeshSaver::saveActiveMesh(void)
             }
         }
 
-        if ((m_iMeshCount == 0) && (m_iNumOfTriPoints == 0) && (m_iNumOfPolyPoints == 0) && 
+        if ((m_iNumOfTriPointChunks == 0) && (m_iNumOfPolyPointChunks == 0) && (m_iNumOfTriPoints == 0) && (m_iNumOfPolyPoints == 0) &&
             (m_iNumOfTriElemChunks == 0) && (m_iNumOfPolyElemChunks == 0) && (m_iNumOfTriElems == 0) && (m_iNumOfPolyElems == 0))
         {
             m_plog->msg(__func__, "The mesh is empty!"); // could happen, when Fusion 360 is already being closed
@@ -920,13 +926,22 @@ bool MeshSaver::saveActiveMesh(void)
         {
             retc = openMeshFiles();
 
-            if (retc) retc = writeNodeHeader(m_iNumOfTriPoints, m_TriMeshFile);
+            if (retc) retc = writeNodeHeader(m_iNumOfTriPointChunks, m_iNumOfTriPoints, m_TriMeshFile);
 
-            if (retc) retc = writeNodeHeader(m_iNumOfPolyPoints, m_PolyMeshFile);
+            if (retc) retc = writeNodeHeader(m_iNumOfPolyPointChunks, m_iNumOfPolyPoints, m_PolyMeshFile);
+
+            m_iTriPointTag = 1;
+            m_iPolyPointTag = 1;
+
+            m_iTriElemTag = 1;
+            m_iPolyElemTag = 1;
 
             if (retc)
             {
                 m_plog->msg(__func__, "Writing points of meshes...");
+
+                m_iTriEntityTag = 1;
+                m_iPolyEntityTag = 1;
 
 #ifdef TRIPPLE_TEST
                 for (int jj = 0; (jj < 3) && retc; jj++)
@@ -948,13 +963,16 @@ bool MeshSaver::saveActiveMesh(void)
                 }
             }
 
-            if (retc) retc = writeElemsHeader(m_iNumOfTriElems, m_iNumOfTriElemChunks, m_TriMeshFile);
+            if (retc) retc = writeElemsHeader(m_iNumOfTriElemChunks, m_iNumOfTriElems, m_TriMeshFile);
 
-            if (retc) retc = writeElemsHeader(m_iNumOfPolyElems, m_iNumOfPolyElemChunks, m_PolyMeshFile);
+            if (retc) retc = writeElemsHeader(m_iNumOfPolyElemChunks, m_iNumOfPolyElems, m_PolyMeshFile);
 
             if (retc)
             {
                 m_plog->msg(__func__, "Writing elements of meshes...");
+
+                m_iTriEntityTag = 1;
+                m_iPolyEntityTag = 1;
 
 #ifdef TRIPPLE_TEST
                 for (int jj = 0; (jj < 3) && retc; jj++)

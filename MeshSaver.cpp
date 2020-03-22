@@ -224,8 +224,12 @@ bool MeshSaver::closeMeshFile(MeshFile& msh_file)
 {
     bool retc = true;
 
+    // TODO: check whether the file msh_file is open
+
     if (retc)
     {
+        msh_file.m_fMeshFile << "$EndElements" << endl;
+
         msh_file.m_fMeshFile.close();
         if (msh_file.m_fMeshFile.bad())
         {
@@ -257,6 +261,8 @@ bool MeshSaver::closeMeshFiles(void)
     m_iMeshCount = 0;
     m_iNumOfTriPoints = 0;
     m_iNumOfPolyPoints = 0;
+    m_iNumOfTriElemChunks = 0;
+    m_iNumOfPolyElemChunks = 0;
     m_iNumOfTriElems = 0;
     m_iNumOfPolyElems = 0;
 
@@ -264,7 +270,7 @@ bool MeshSaver::closeMeshFiles(void)
 }
 
 
-bool MeshSaver::writeNodeHeader(int num_of_points, MeshFile& msh_file)
+bool MeshSaver::writeNodeHeader(/* int */ size_t num_of_points, MeshFile& msh_file)
 {
     bool retc = true;
 
@@ -288,7 +294,28 @@ bool MeshSaver::writeNodeHeader(int num_of_points, MeshFile& msh_file)
     return retc;
 }
 
-bool MeshSaver::writePoints(vector<Ptr<Point3D>>& points, vector<int>& triangles, vector<int>& quads, vector<int>& polygons, MeshFile& msh_file)
+
+bool MeshSaver::writeElemsHeader(int num_of_elems, int num_of_entities, MeshFile& msh_file)
+{
+    bool retc = true;
+
+    // TODO: check whether the file msh_file is open
+
+    msh_file.m_fMeshFile << "$EndNodes" << endl;
+
+    msh_file.m_fMeshFile << "$Elements" << endl;
+
+    // entities header
+    msh_file.m_fMeshFile << num_of_entities
+        << " " << num_of_elems // num of elems in all entities
+        << " " << 1 << " " << num_of_elems // first and last element tag
+        << endl;
+
+    return retc;
+}
+
+
+bool MeshSaver::writePoints(vector<Ptr<Point3D>>& points, MeshFile& msh_file)
 {
     bool retc = true;
 
@@ -325,42 +352,6 @@ bool MeshSaver::writePoints(vector<Ptr<Point3D>>& points, vector<int>& triangles
                 msh_file.m_fMeshFile << endl;
             }
         }
-
-        msh_file.m_fMeshFile << "$EndNodes" << endl;
-
-        msh_file.m_fMeshFile << "$Elements" << endl;
-        size_t num_of_triangles = triangles.size() / ElemSizes[MSH_TRI_3];
-        size_t num_of_quads = 0; // quads.size() / ElemSizes[MSH_QUA_4];
-        size_t num_of_polygons = 0; // polygons.size() / ElemSizes[MSH_TET_4]; ???
-        size_t num_of_elems = num_of_triangles + num_of_quads + num_of_polygons;
-        int id = 0; // tag of the current element
-
-        // entities header
-        msh_file.m_fMeshFile << 1 // num of entities
-            << " " << num_of_elems // num of elems in all entities
-            << " " << 1 << " " << num_of_elems // first and last tag
-            << endl;
-
-        // triangles entity
-        int elem_type = MSH_TRI_3;
-        int elem_size = ElemSizes[elem_type];
-        msh_file.m_fMeshFile << 2 // num of dimensions
-            << " " << 1 // entity tag
-            << " " << elem_type // triangles
-            << " " << num_of_elems << endl;
-
-        int ix = 0;
-        for (vector<int>::iterator it = triangles.begin(); (it != triangles.end()) && retc; it++)
-        {
-            if (ix % elem_size == 0)
-                msh_file.m_fMeshFile << ++id; // elem tag
-            msh_file.m_fMeshFile << " " << *it + 1;
-            if (ix % elem_size == elem_size - 1)
-                msh_file.m_fMeshFile << endl;
-            ix++;
-        }
-
-        msh_file.m_fMeshFile << "$EndElements" << endl;
     }
 
     if (retc && msh_file.m_fMeshFile.bad())
@@ -372,8 +363,8 @@ bool MeshSaver::writePoints(vector<Ptr<Point3D>>& points, vector<int>& triangles
 
     return retc;
 }
-    
-bool MeshSaver::writeTriangleMesh(Ptr<TriangleMesh> tri_mesh)
+
+bool MeshSaver::writeTriangleMeshPoints(Ptr<TriangleMesh> tri_mesh)
 {
     bool retc = true;
 
@@ -386,31 +377,19 @@ bool MeshSaver::writeTriangleMesh(Ptr<TriangleMesh> tri_mesh)
     }
 
     vector<Ptr<Point3D>> points;
-    if (retc)
-    {
-        points = tri_mesh->nodeCoordinates();
-        if (points.size() == 0)
-            m_plog->msg(__func__, "TriangleMesh has no points!");
-    }
-
-    vector<int> triangles;
-    if (retc)
-        triangles = tri_mesh->nodeIndices();
-
-    vector<int> quads;
-    vector<int> polygons;
+    if (retc) points = tri_mesh->nodeCoordinates();
 
     if (retc)
     {
-        m_plog->msg(__func__, "TriangleMesh:");
-        retc = writePoints(points, triangles, quads, polygons, m_TriMeshFile);
+        m_plog->msg(__func__, "Writing TriangleMesh points...");
+        retc = writePoints(points, m_TriMeshFile);
     }
 
     return retc;
 }
 
 
-bool MeshSaver::writePolygonMesh(Ptr<PolygonMesh> poly_mesh)
+bool MeshSaver::writePolygonMeshPoints(Ptr<PolygonMesh> poly_mesh)
 {
     bool retc = true;
 
@@ -423,63 +402,19 @@ bool MeshSaver::writePolygonMesh(Ptr<PolygonMesh> poly_mesh)
     }
 
     vector<Ptr<Point3D>> points;
-    if (retc)
-    {
-        points = poly_mesh->nodeCoordinates();
-        if (points.size() == 0)
-            m_plog->msg(__func__, "PolygonMesh has no points!");
-    }
-
-    vector<int> triangles;
-    if (retc)
-    {
-        triangles = poly_mesh->triangleNodeIndices();
-        int num_of_triangles = poly_mesh->triangleCount();
-        // if (num_of_triangles)
-        {
-            stringstream out_str;
-            out_str << "triangles: " << num_of_triangles << " " << triangles.size();
-            m_plog->msg(__func__, out_str.str().c_str());
-        }
-    }
-
-    vector<int> quads;
-    if (retc)
-    {
-        quads = poly_mesh->quadNodeIndices();
-        int num_of_quads = poly_mesh->quadCount();
-        // if (num_of_quads)
-        {
-            stringstream out_str;
-            out_str << "quads: " << num_of_quads << " " << quads.size();
-            m_plog->msg(__func__, out_str.str().c_str());
-        }
-    }
-
-    vector<int> polygons;
-    if (retc)
-    {
-        polygons = poly_mesh->polygonNodeIndices();
-        int num_of_polygons = poly_mesh->polygonCount();
-        // if (num_of_polygons)
-        {
-            stringstream out_str;
-            out_str << "polygons: " << num_of_polygons << " " << polygons.size();
-            m_plog->msg(__func__, out_str.str().c_str());
-        }
-    }
+    if (retc) points = poly_mesh->nodeCoordinates();
 
     if (retc)
     {
-        m_plog->msg(__func__, "PolygonMesh:");
-        retc = writePoints(points, triangles, quads, polygons, m_PolyMeshFile);
+        m_plog->msg(__func__, "Writing PolygonMesh points...");
+        retc = writePoints(points, m_PolyMeshFile);
     }
 
     return retc;
 }
 
 
-bool MeshSaver::writeMeshBody(Ptr<MeshBody> mesh_body)
+bool MeshSaver::writeMeshBodyPoints(Ptr<MeshBody> mesh_body)
 {
     bool retc = true;
 
@@ -507,10 +442,152 @@ bool MeshSaver::writeMeshBody(Ptr<MeshBody> mesh_body)
     }
 
     if (retc && poly_mesh)
-        retc = writePolygonMesh(poly_mesh);
+        retc = writePolygonMeshPoints(poly_mesh);
 
     if (retc && tri_mesh)
-        retc = writeTriangleMesh(tri_mesh);
+        retc = writeTriangleMeshPoints(tri_mesh);
+
+    return retc;
+}
+
+
+bool MeshSaver::writeElems(vector<int>& triangles, vector<int>& quads, vector<int>& polygons, MeshFile& msh_file)
+{
+    bool retc = true;
+
+    if (retc) if (!m_plog) retc = false;
+
+    // TODO: check whether the file msh_file is open
+
+    if (retc)
+    {
+        size_t num_of_triangles = triangles.size() / ElemSizes[MSH_TRI_3];
+        // size_t num_of_quads = quads.size() / ElemSizes[MSH_QUA_4];
+        // size_t num_of_polygons = polygons.size() / ElemSizes[MSH_TET_4]; ???
+
+        int id = 0; // tag of the current element
+
+        // triangles entity
+        int elem_type = MSH_TRI_3;
+        int elem_size = ElemSizes[elem_type];
+        msh_file.m_fMeshFile << 2 // num of dimensions
+            << " " << 1 // entity tag
+            << " " << elem_type // triangles
+            << " " << num_of_triangles << endl;
+
+        int ix = 0;
+        for (vector<int>::iterator it = triangles.begin(); (it != triangles.end()) && retc; it++)
+        {
+            if (ix % elem_size == 0)
+                msh_file.m_fMeshFile << ++id; // elem tag
+            msh_file.m_fMeshFile << " " << *it + 1;
+            if (ix % elem_size == elem_size - 1)
+                msh_file.m_fMeshFile << endl;
+            ix++;
+        }
+    }
+
+    if (retc && msh_file.m_fMeshFile.bad())
+    {
+        string msg = "Error writing to the file " + msh_file.m_sMeshFName + "!";
+        m_plog->msg(__func__, msg.c_str());
+        retc = false;
+    }
+
+    return retc;
+}
+    
+bool MeshSaver::writeTriangleMeshElems(Ptr<TriangleMesh> tri_mesh)
+{
+    bool retc = true;
+
+    if (retc) if (!m_plog) retc = false;
+
+    if (retc && !tri_mesh)
+    {
+        m_plog->msg(__func__, "No TriangleMesh ptr given!");
+        retc = false;
+    }
+
+    vector<int> triangles;
+    if (retc) triangles = tri_mesh->nodeIndices();
+
+    vector<int> quads;
+    vector<int> polygons;
+
+    if (retc)
+    {
+        m_plog->msg(__func__, "Writing TriangleMesh elems...");
+        retc = writeElems(triangles, quads, polygons, m_TriMeshFile);
+    }
+
+    return retc;
+}
+
+
+bool MeshSaver::writePolygonMeshElems(Ptr<PolygonMesh> poly_mesh)
+{
+    bool retc = true;
+
+    if (retc) if (!m_plog) retc = false;
+
+    if (retc && !poly_mesh)
+    {
+        m_plog->msg(__func__, "No PolygonMesh ptr given!");
+        retc = false;
+    }
+
+    vector<int> triangles;
+    if (retc) triangles = poly_mesh->triangleNodeIndices();
+
+    vector<int> quads;
+    if (retc) quads = poly_mesh->quadNodeIndices();
+
+    vector<int> polygons;
+    if (retc) polygons = poly_mesh->polygonNodeIndices();
+
+    if (retc)
+    {
+        m_plog->msg(__func__, "Write PolygonMesh elems...");
+        retc = writeElems(triangles, quads, polygons, m_PolyMeshFile);
+    }
+
+    return retc;
+}
+
+
+bool MeshSaver::writeMeshBodyElems(Ptr<MeshBody> mesh_body)
+{
+    bool retc = true;
+
+    if (retc) if (!m_plog) retc = false;
+
+    if (retc && !mesh_body)
+    {
+        m_plog->msg(__func__, "No MeshBody ptr given!");
+        retc = false;
+    }
+
+    Ptr<PolygonMesh> poly_mesh = nullptr;
+    Ptr<TriangleMesh> tri_mesh = nullptr;
+    if (retc)
+    {
+        m_plog->msg(__func__, "Looking for the PolygonMesh...");
+        poly_mesh = mesh_body->mesh();
+        if (!poly_mesh)
+            m_plog->msg(__func__, "No PolygonMesh!");
+
+        m_plog->msg(__func__, "Looking for the TriangleMesh...");
+        tri_mesh = mesh_body->displayMesh();
+        if (!tri_mesh)
+            m_plog->msg(__func__, "No TriangleMesh!");
+    }
+
+    if (retc && poly_mesh)
+        retc = writePolygonMeshElems(poly_mesh);
+
+    if (retc && tri_mesh)
+        retc = writeTriangleMeshElems(tri_mesh);
 
     return retc;
 }
@@ -532,6 +609,8 @@ bool MeshSaver::countTriangleMesh(Ptr<TriangleMesh> tri_mesh)
     {
         vector<Ptr<Point3D>> points = tri_mesh->nodeCoordinates();
         size_t num_of_coords = points.size();
+        if (num_of_coords == 0)
+            m_plog->msg(__func__, "TriangleMesh has no points!");
 
         int num_of_points = tri_mesh->nodeCount(); // erroneously returns count of triangle vertices
         m_iNumOfTriPoints += num_of_coords; //  num_of_points;
@@ -551,6 +630,11 @@ bool MeshSaver::countTriangleMesh(Ptr<TriangleMesh> tri_mesh)
     {
         int num_of_triangles = tri_mesh->triangleCount();
         m_iNumOfTriElems += num_of_triangles;
+
+        if (num_of_triangles > 0)
+            m_iNumOfTriElemChunks++;
+        else
+            m_plog->msg(__func__, "TriangleMesh has no elements!");
 
         vector<int> triangles = tri_mesh->nodeIndices();
         size_t num_of_vertices = triangles.size();
@@ -583,6 +667,8 @@ bool MeshSaver::countPolygonMesh(Ptr<PolygonMesh> poly_mesh)
     {
         vector<Ptr<Point3D>> points = poly_mesh->nodeCoordinates();
         size_t num_of_coords = points.size();
+        if (num_of_coords == 0)
+            m_plog->msg(__func__, "PolygonMesh has no points!");
 
         int num_of_points = poly_mesh->nodeCount();
         m_iNumOfPolyPoints += num_of_points;
@@ -603,6 +689,9 @@ bool MeshSaver::countPolygonMesh(Ptr<PolygonMesh> poly_mesh)
         int num_of_triangles = poly_mesh->triangleCount();
         m_iNumOfPolyElems += num_of_triangles;
 
+        if (num_of_triangles > 0)
+            m_iNumOfPolyElemChunks++;
+
         vector<int> triangles = poly_mesh->triangleNodeIndices();
         size_t num_of_vertices = triangles.size();
 
@@ -619,6 +708,9 @@ bool MeshSaver::countPolygonMesh(Ptr<PolygonMesh> poly_mesh)
         int num_of_quads = poly_mesh->quadCount();
         m_iNumOfPolyElems += num_of_quads;
 
+        if (num_of_quads > 0)
+            m_iNumOfPolyElemChunks++;
+
         vector<int> quads = poly_mesh->quadNodeIndices();
         size_t num_of_vertices = quads.size();
 
@@ -634,6 +726,9 @@ bool MeshSaver::countPolygonMesh(Ptr<PolygonMesh> poly_mesh)
     {
         int num_of_polygons = poly_mesh->polygonCount();
         m_iNumOfPolyElems += num_of_polygons;
+
+        if (num_of_polygons > 0)
+            m_iNumOfPolyElemChunks++;
 
         vector<int> polygons = poly_mesh->polygonNodeIndices();
         size_t num_of_vertices = polygons.size();
@@ -835,11 +930,35 @@ bool MeshSaver::saveActiveMesh(void)
                         stringstream out_str;
                         out_str << "The mesh " << ii << ": " << mesh_body->name() << endl;
                         m_plog->msg(__func__, out_str.str().c_str());
-                        retc = writeMeshBody(mesh_body);
+                        retc = writeMeshBodyPoints(mesh_body);
                     }
                     else
                         retc = false;
                 }
+            }
+
+            if (retc) retc = writeElemsHeader(m_iNumOfTriElems, m_iNumOfTriElemChunks, m_TriMeshFile);
+
+            if (retc) retc = writeElemsHeader(m_iNumOfPolyElems, m_iNumOfPolyElemChunks, m_PolyMeshFile);
+
+            if (retc)
+            {
+                m_plog->msg(__func__, "Writing meshes...");
+
+                for (int ii = 0; (ii < m_iMeshCount) && retc; ii++)
+                {
+                    Ptr<MeshBody> mesh_body = meshes->item(ii);
+                    if (mesh_body)
+                    {
+                        stringstream out_str;
+                        out_str << "The mesh " << ii << ": " << mesh_body->name() << endl;
+                        m_plog->msg(__func__, out_str.str().c_str());
+                        retc = writeMeshBodyElems(mesh_body);
+                    }
+                    else
+                        retc = false;
+                }
+
             }
 
             retc &= closeMeshFiles();

@@ -1,7 +1,6 @@
 ﻿  MeshSaver.cpp
 E:\Users\Paulius\AppData\Roaming\Autodesk\Autodesk Fusion 360\API\AddIns\SaveMesh\MeshSaver.cpp(212,1): warning C4996: 'getenv': This function or variable may be unsafe. Consider using _dupenv_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
 E:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\ucrt\stdlib.h(1191): message : see declaration of 'getenv'
-E:\Users\Paulius\AppData\Roaming\Autodesk\Autodesk Fusion 360\API\AddIns\SaveMesh\MeshSaver.cpp(537,43): warning C4267: '+=': conversion from 'size_t' to 'int', possible loss of data
 SaveMesh.obj : warning LNK4075: ignoring '/EDITANDCONTINUE' due to '/INCREMENTAL:NO' specification
      Creating library E:\Users\Paulius\AppData\Roaming\Autodesk\Autodesk Fusion 360\API\AddIns\SaveMesh\Debug\SaveMesh.lib and object E:\Users\Paulius\AppData\Roaming\Autodesk\Autodesk Fusion 360\API\AddIns\SaveMesh\Debug\SaveMesh.exp
   SaveMesh.vcxproj -> E:\Users\Paulius\AppData\Roaming\Autodesk\Autodesk Fusion 360\API\AddIns\SaveMesh\Debug\SaveMesh.dll

@@ -48,7 +48,7 @@ private:
     MeshFile m_PolyMeshFile; // file for PolygonMesh'es
 
     size_t m_iMeshCount = 0; // number of MeshBody'es
-    int m_iNumOfTriPoints = 0; // total number of points (nodes) in all TriangleMesh'es
+    /* int */ size_t m_iNumOfTriPoints = 0; // total number of points (nodes) in all TriangleMesh'es
     int m_iNumOfPolyPoints = 0; // total number of points (nodes) in all PolygonMesh'es
     int m_iNumOfTriElemChunks = 0; // total number of triangle vectors in all TriangleMesh'es
     int m_iNumOfPolyElemChunks = 0; // total number of triangle, quad and pollygon vectors in all TriangleMesh'es
@@ -80,10 +80,14 @@ public:
     // called from saveActiveMesh()
     bool closeMeshFiles(void);
 
-    bool writeMeshBody(Ptr<MeshBody> mesh); // called from saveActiveMesh(); calls writePolygonMesh() or writeTriangleMesh()
-    bool writePolygonMesh(Ptr<PolygonMesh> poly_mesh); // called from writeMeshBody(); calls writePoints()
-    bool writeTriangleMesh(Ptr<TriangleMesh> tri_mesh); // called from writeMeshBody(); calls writePoints()
-    
+    bool writeMeshBodyPoints(Ptr<MeshBody> mesh); // called from saveActiveMesh(); calls writePolygonMeshPoints() or writeTriangleMeshPoints()
+    bool writePolygonMeshPoints(Ptr<PolygonMesh> poly_mesh); // called from writeMeshBodyPoints(); calls writePoints()
+    bool writeTriangleMeshPoints(Ptr<TriangleMesh> tri_mesh); // called from writeMeshBodyPoints(); calls writePoints()
+
+    bool writeMeshBodyElems(Ptr<MeshBody> mesh); // called from saveActiveMesh(); calls writePolygonMeshElems() or writeTriangleMeshElems()
+    bool writePolygonMeshElems(Ptr<PolygonMesh> poly_mesh); // called from writeMeshBodyElems(); calls writeElems()
+    bool writeTriangleMeshElems(Ptr<TriangleMesh> tri_mesh); // called from writeMeshBodyElems(); calls writeElems()
+
     bool countMeshBody(Ptr<MeshBody> mesh); // called from saveActiveMesh(); calls countPolygonMesh() or countTriangleMesh()
     bool countPolygonMesh(Ptr<PolygonMesh> poly_mesh); // called from countMeshBody()
     bool countTriangleMesh(Ptr<TriangleMesh> tri_mesh); // called from countMeshBody()
@@ -91,9 +95,19 @@ public:
     // called from saveActiveMesh(); 
     // num_of_points -- either m_iNumOfTriPoints or m_iNumOfPolyPoints
     // msh_file -- reference to either m_fTriMeshFile or m_fPolyMeshFile
-    bool writeNodeHeader(int num_of_points, MeshFile& msh_file);
+    bool writeNodeHeader(/* int */ size_t num_of_points, MeshFile& msh_file);
 
-    // called from writePolygonMesh() or writeTriangleMesh()
+    // called from saveActiveMesh(); 
+    // num_of_points -- total number of polygons (elements) in all element chunks (entities), either m_iNumOfTriElems or m_iNumOfPolyElems
+    // num_of_entities -- total number of element chunks (entities), either m_iNumOfTriElemChunks or m_iNumOfPolyElemChunks
+    // msh_file -- reference to either m_TriMeshFile or m_PolyMeshFile
+    bool writeElemsHeader(int num_of_elems, int num_of_entities, MeshFile& msh_file);
+
+    // called from writePolygonMeshPoints() or writeTriangleMeshPoints()
     // msh_file -- reference to either m_fTriMeshFile or m_fPolyMeshFile
-    bool writePoints(vector<Ptr<Point3D>>& points, vector<int>& triangles, vector<int>& quads, vector<int>& polygons, MeshFile& msh_file);
+    bool writePoints(vector<Ptr<Point3D>>& points, MeshFile& msh_file);
+
+    // called from writePolygonMeshElems() or writeTriangleMeshElems()
+    // msh_file -- reference to either m_fTriMeshFile or m_fPolyMeshFile
+    bool writeElems(vector<int>& triangles, vector<int>& quads, vector<int>& polygons, MeshFile& msh_file);
 };

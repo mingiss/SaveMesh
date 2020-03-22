@@ -4,6 +4,8 @@
 
 #pragma once
 
+#define TRIPPLE_TEST
+
 #include <iostream> 
 #include <sstream>
 #include <fstream>

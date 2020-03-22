@@ -883,23 +883,29 @@ bool MeshSaver::saveActiveMesh(void)
             m_plog->msg(__func__, "Calculating entities count...");
             m_iMeshCount = meshes->count();
 
-            for (int ii = 0; (ii < m_iMeshCount) && retc; ii++)
+#ifdef TRIPPLE_TEST
+            for (int jj = 0; (jj < 3) && retc; jj++)
+#endif
             {
-                Ptr<MeshBody> mesh_body = meshes->item(ii);
-                if (mesh_body)
+                for (int ii = 0; (ii < m_iMeshCount) && retc; ii++)
                 {
-                    stringstream out_str;
-                    out_str << "The mesh " << ii << " (" << mesh_body->name() << ") counts: " << endl;
-                    m_plog->msg(__func__, out_str.str().c_str());
-                    retc = countMeshBody(mesh_body);
+                    Ptr<MeshBody> mesh_body = meshes->item(ii);
+                    if (mesh_body)
+                    {
+                        stringstream out_str;
+                        out_str << "The mesh " << ii << " (" << mesh_body->name() << ") counts: " << endl;
+                        m_plog->msg(__func__, out_str.str().c_str());
+                        retc = countMeshBody(mesh_body);
+                    }
+                    else
+                    {
+                        stringstream out_str;
+                        out_str << "No mesh body " << ii << "!" << endl;
+                        m_plog->msg(__func__, out_str.str().c_str());
+                        retc = false;
+                    }
                 }
-                else
-                {
-                    stringstream out_str;
-                    out_str << "No mesh body " << ii << "!" << endl;
-                    m_plog->msg(__func__, out_str.str().c_str());
-                    retc = false;
-                }
+
             }
         }
 
@@ -920,20 +926,25 @@ bool MeshSaver::saveActiveMesh(void)
 
             if (retc)
             {
-                m_plog->msg(__func__, "Writing meshes...");
+                m_plog->msg(__func__, "Writing points of meshes...");
 
-                for (int ii = 0; (ii < m_iMeshCount) && retc; ii++)
+#ifdef TRIPPLE_TEST
+                for (int jj = 0; (jj < 3) && retc; jj++)
+#endif
                 {
-                    Ptr<MeshBody> mesh_body = meshes->item(ii);
-                    if (mesh_body)
+                    for (int ii = 0; (ii < m_iMeshCount) && retc; ii++)
                     {
-                        stringstream out_str;
-                        out_str << "The mesh " << ii << ": " << mesh_body->name() << endl;
-                        m_plog->msg(__func__, out_str.str().c_str());
-                        retc = writeMeshBodyPoints(mesh_body);
+                        Ptr<MeshBody> mesh_body = meshes->item(ii);
+                        if (mesh_body)
+                        {
+                            stringstream out_str;
+                            out_str << "The mesh " << ii << ": " << mesh_body->name() << endl;
+                            m_plog->msg(__func__, out_str.str().c_str());
+                            retc = writeMeshBodyPoints(mesh_body);
+                        }
+                        else
+                            retc = false;
                     }
-                    else
-                        retc = false;
                 }
             }
 
@@ -943,22 +954,26 @@ bool MeshSaver::saveActiveMesh(void)
 
             if (retc)
             {
-                m_plog->msg(__func__, "Writing meshes...");
+                m_plog->msg(__func__, "Writing elements of meshes...");
 
-                for (int ii = 0; (ii < m_iMeshCount) && retc; ii++)
+#ifdef TRIPPLE_TEST
+                for (int jj = 0; (jj < 3) && retc; jj++)
+#endif
                 {
-                    Ptr<MeshBody> mesh_body = meshes->item(ii);
-                    if (mesh_body)
+                    for (int ii = 0; (ii < m_iMeshCount) && retc; ii++)
                     {
-                        stringstream out_str;
-                        out_str << "The mesh " << ii << ": " << mesh_body->name() << endl;
-                        m_plog->msg(__func__, out_str.str().c_str());
-                        retc = writeMeshBodyElems(mesh_body);
+                        Ptr<MeshBody> mesh_body = meshes->item(ii);
+                        if (mesh_body)
+                        {
+                            stringstream out_str;
+                            out_str << "The mesh " << ii << ": " << mesh_body->name() << endl;
+                            m_plog->msg(__func__, out_str.str().c_str());
+                            retc = writeMeshBodyElems(mesh_body);
+                        }
+                        else
+                            retc = false;
                     }
-                    else
-                        retc = false;
                 }
-
             }
 
             retc &= closeMeshFiles();

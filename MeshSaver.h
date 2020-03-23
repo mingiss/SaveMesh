@@ -46,6 +46,13 @@ public:
     ofstream m_fMeshFile;
 };
 
+class ElemEntity
+{
+public:
+    int m_iElemType = MSH_TRI_3;
+    vector<int> m_Elems;
+};
+
 class MeshSaver
 {
 private:
@@ -147,5 +154,5 @@ public:
     // elem_tag -- reference to either m_iTriElemTag or m_iPolyElemTag
     // first_point_tag -- reference to either m_iTriFirstPointTag or m_iPolyFirstPointTag
     // msh_file -- reference to either m_fTriMeshFile or m_fPolyMeshFile
-    bool writeElems(vector<int>& triangles, vector<int>& quads, vector<int>& polygons, int& entity_tag, int& elem_tag, /* int& */ size_t& first_point_tag, MeshFile& msh_file);
+    bool writeElems(vector<ElemEntity>& elems, int& entity_tag, int& elem_tag, /* int& */ size_t& first_point_tag, MeshFile& msh_file);
 };

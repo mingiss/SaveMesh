@@ -224,7 +224,12 @@ bool MeshSaver::closeMeshFile(MeshFile& msh_file)
 {
     bool retc = true;
 
-    // TODO: check whether the file msh_file is open
+    if (retc && (!msh_file.m_fMeshFile.is_open()))
+    {
+        string msg = "File " + msh_file.m_sMeshFName + " not open!";
+            m_plog->msg(__func__, msg.c_str());
+            retc = false;
+    }
 
     if (retc)
     {
@@ -276,7 +281,12 @@ bool MeshSaver::writeNodeHeader(int num_of_entities, /* int */ size_t num_of_poi
 {
     bool retc = true;
 
-    // TODO: check whether the file msh_file is open
+    if (retc && (!msh_file.m_fMeshFile.is_open()))
+    {
+        string msg = "File " + msh_file.m_sMeshFName + " not open!";
+        m_plog->msg(__func__, msg.c_str());
+        retc = false;
+    }
 
     if (retc)
     {
@@ -293,6 +303,13 @@ bool MeshSaver::writeNodeHeader(int num_of_entities, /* int */ size_t num_of_poi
             << endl;
     }
 
+    if (retc && msh_file.m_fMeshFile.bad())
+    {
+        string msg = "Error writing to the file " + msh_file.m_sMeshFName + "!";
+        m_plog->msg(__func__, msg.c_str());
+        retc = false;
+    }
+
     return retc;
 }
 
@@ -301,17 +318,32 @@ bool MeshSaver::writeElemsHeader(int num_of_entities, int num_of_elems, MeshFile
 {
     bool retc = true;
 
-    // TODO: check whether the file msh_file is open
+    if (retc && (!msh_file.m_fMeshFile.is_open()))
+    {
+        string msg = "File " + msh_file.m_sMeshFName + " not open!";
+        m_plog->msg(__func__, msg.c_str());
+        retc = false;
+    }
 
-    msh_file.m_fMeshFile << "$EndNodes" << endl;
+    if (retc)
+    {
+        msh_file.m_fMeshFile << "$EndNodes" << endl;
 
-    msh_file.m_fMeshFile << "$Elements" << endl;
+        msh_file.m_fMeshFile << "$Elements" << endl;
 
-    // entities header
-    msh_file.m_fMeshFile << num_of_entities
-        << " " << num_of_elems // num of elements in all entities
-        << " " << 1 << " " << num_of_elems // first and last element tag
-        << endl;
+        // entities header
+        msh_file.m_fMeshFile << num_of_entities
+            << " " << num_of_elems // num of elements in all entities
+            << " " << 1 << " " << num_of_elems // first and last element tag
+            << endl;
+    }
+
+    if (retc && msh_file.m_fMeshFile.bad())
+    {
+        string msg = "Error writing to the file " + msh_file.m_sMeshFName + "!";
+        m_plog->msg(__func__, msg.c_str());
+        retc = false;
+    }
 
     return retc;
 }
@@ -323,7 +355,12 @@ bool MeshSaver::writePoints(vector<Ptr<Point3D>>& points, int& entity_tag, int& 
 
     if (retc) if (!m_plog) retc = false;
 
-    // TODO: check whether the file msh_file is open
+    if (retc && (!msh_file.m_fMeshFile.is_open()))
+    {
+        string msg = "File " + msh_file.m_sMeshFName + " not open!";
+        m_plog->msg(__func__, msg.c_str());
+        retc = false;
+    }
 
     if (retc)
     {
@@ -457,38 +494,63 @@ bool MeshSaver::writeMeshBodyPoints(Ptr<MeshBody> mesh_body)
 }
 
 
-// TODO: put triangles, quads and polygons to a vector of objects, each containing the particular vector of int's and a number of vertices of elements in that vector  
-bool MeshSaver::writeElems(vector<int>& triangles, vector<int>& quads, vector<int>& polygons, int& entity_tag, int& elem_tag, /* int& */ size_t& first_point_tag, MeshFile& msh_file)
+bool MeshSaver::writeElems(vector<ElemEntity>& elems, int& entity_tag, int& elem_tag, /* int& */ size_t& first_point_tag, MeshFile& msh_file)
 {
     bool retc = true;
 
     if (retc) if (!m_plog) retc = false;
 
-    // TODO: check whether the file msh_file is open
-
-    if (retc)
+    if (retc && (!msh_file.m_fMeshFile.is_open()))
     {
-        size_t num_of_triangles = triangles.size() / ElemSizes[MSH_TRI_3];
-        // size_t num_of_quads = quads.size() / ElemSizes[MSH_QUA_4];
-        // size_t num_of_polygons = polygons.size() / ElemSizes[MSH_TET_4]; ???
+        string msg = "File " + msh_file.m_sMeshFName + " not open!";
+        m_plog->msg(__func__, msg.c_str());
+        retc = false;
+    }
 
-        // triangles entity
-        int elem_type = MSH_TRI_3;
-        int elem_size = ElemSizes[elem_type];
-        msh_file.m_fMeshFile << 2 // num of dimensions
-            << " " << entity_tag++
-            << " " << elem_type // triangles
-            << " " << num_of_triangles << endl;
-
-        int ix = 0;
-        for (vector<int>::iterator it = triangles.begin(); (it != triangles.end()) && retc; it++)
+    if (retc) for (vector<ElemEntity>::iterator ie = elems.begin(); (ie != elems.end()) && retc; ie++)
+    {
+        int elem_type = ie->m_iElemType;
+        if ((elem_type < 0) || (elem_type >= MSH_MAX_NUM))
         {
-            if (ix % elem_size == 0)
-                msh_file.m_fMeshFile << elem_tag++;
-            msh_file.m_fMeshFile << " " << *it + first_point_tag; // TODO: shift by a value of the starting point tag of the current MeshBody
-            if (ix % elem_size == elem_size - 1)
-                msh_file.m_fMeshFile << endl;
-            ix++;
+            stringstream out_str;
+            out_str << "Invalid elem type: " << elem_type << "!";
+            m_plog->msg(__func__, out_str.str().c_str());
+            retc = false;
+        }
+
+        int elem_size = 1;
+        if (retc)
+        {
+            elem_size = ElemSizes[elem_type];
+            if (elem_size < 1)
+            {
+                stringstream out_str;
+                out_str << "Invalid elem size: " << elem_size << "!";
+                m_plog->msg(__func__, out_str.str().c_str());
+                retc = false;
+            }
+        }
+
+        size_t num_of_elems = 0;
+        if (retc)
+        {
+            num_of_elems = ie->m_Elems.size() / elem_size;
+
+            msh_file.m_fMeshFile << 2 // num of dimensions
+                << " " << entity_tag++
+                << " " << elem_type
+                << " " << num_of_elems << endl;
+
+            int ix = 0;
+            for (vector<int>::iterator it = ie->m_Elems.begin(); (it != ie->m_Elems.end()) && retc; it++)
+            {
+                if (ix % elem_size == 0)
+                    msh_file.m_fMeshFile << elem_tag++;
+                msh_file.m_fMeshFile << " " << *it + first_point_tag;
+                if (ix % elem_size == elem_size - 1)
+                    msh_file.m_fMeshFile << endl;
+                ix++;
+            }
         }
     }
 
@@ -514,16 +576,27 @@ bool MeshSaver::writeTriangleMeshElems(Ptr<TriangleMesh> tri_mesh)
         retc = false;
     }
 
-    vector<int> triangles;
-    if (retc) triangles = tri_mesh->nodeIndices();
+    vector<ElemEntity> entities;
 
-    vector<int> quads;
-    vector<int> polygons;
+    if (retc)
+    {
+        ElemEntity triangles;
+        triangles.m_iElemType = MSH_TRI_3;
+        triangles.m_Elems = tri_mesh->nodeIndices();
+        if (triangles.m_Elems.size() > 0)
+            entities.push_back(triangles);
+    }
+
+    if (retc && (entities.size() == 0))
+    {
+        m_plog->msg(__func__, "No elems in TriangleMesh!");
+        retc = false;
+    }
 
     if (retc)
     {
         m_plog->msg(__func__, "Writing TriangleMesh elems...");
-        retc = writeElems(triangles, quads, polygons, m_iTriEntityTag, m_iTriElemTag, m_iTriFirstPointTag, m_TriMeshFile);
+        retc = writeElems(entities, m_iTriEntityTag, m_iTriElemTag, m_iTriFirstPointTag, m_TriMeshFile);
     }
 
     if (retc)
@@ -545,19 +618,45 @@ bool MeshSaver::writePolygonMeshElems(Ptr<PolygonMesh> poly_mesh)
         retc = false;
     }
 
-    vector<int> triangles;
-    if (retc) triangles = poly_mesh->triangleNodeIndices();
+    vector<ElemEntity> entities;
 
-    vector<int> quads;
-    if (retc) quads = poly_mesh->quadNodeIndices();
+    if (retc)
+    {
+        ElemEntity triangles;
+        triangles.m_iElemType = MSH_TRI_3;
+        triangles.m_Elems = poly_mesh->triangleNodeIndices();
+        if (triangles.m_Elems.size() > 0)
+            entities.push_back(triangles);
+    }
 
-    vector<int> polygons;
-    if (retc) polygons = poly_mesh->polygonNodeIndices();
+    if (retc)
+    {
+        ElemEntity quads;
+        quads.m_iElemType = MSH_QUA_4;
+        quads.m_Elems = poly_mesh->quadNodeIndices();
+        if (quads.m_Elems.size() > 0)
+            entities.push_back(quads);
+    }
+
+    if (retc)
+    {
+        ElemEntity polygons;
+        polygons.m_iElemType = MSH_TET_4; // TODO: ???
+        polygons.m_Elems = poly_mesh->polygonNodeIndices();
+        if (polygons.m_Elems.size() > 0)
+            entities.push_back(polygons);
+    }
+
+    if (retc && (entities.size() == 0))
+    {
+        m_plog->msg(__func__, "No elems in PolygonMesh!");
+        retc = false;
+    }
 
     if (retc)
     {
         m_plog->msg(__func__, "Write PolygonMesh elems...");
-        retc = writeElems(triangles, quads, polygons, m_iPolyEntityTag, m_iPolyElemTag, m_iPolyFirstPointTag, m_PolyMeshFile);
+        retc = writeElems(entities, m_iPolyEntityTag, m_iPolyElemTag, m_iPolyFirstPointTag, m_PolyMeshFile);
     }
 
     if (retc)

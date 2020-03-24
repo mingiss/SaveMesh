@@ -210,8 +210,16 @@ bool MeshSaver::openMeshFiles(void)
     bool retc = true;
 
     string spath = string() + getenv("APPDATA") + "/Autodesk/Autodesk Fusion 360/API/AddIns/" + m_sAppName + "/" + m_sAppName + "_";
-    m_TriMeshFile.m_sMeshFName = spath + "triangle" + ".msh";
-    m_PolyMeshFile.m_sMeshFName = spath + "polygon" + ".msh";
+    m_TriMeshFile.m_sMeshFName = spath + "triangle" +
+#ifdef TRIPLE_TEST
+        "_3x" +
+#endif
+        ".msh";
+    m_PolyMeshFile.m_sMeshFName = spath + "polygon" +
+#ifdef TRIPLE_TEST
+        "_3x" +
+#endif
+        ".msh";
 
     if (retc) retc = openMeshFile(m_TriMeshFile);
     if (retc) retc = openMeshFile(m_PolyMeshFile);
@@ -388,7 +396,7 @@ bool MeshSaver::writePoints(vector<Ptr<Point3D>>& points, int& entity_tag, int& 
             {
                 for (vector<double>::iterator id = coords.begin(); (id != coords.end()) && retc; id++)
                     msh_file.m_fMeshFile << *id
-#ifdef TRIPPLE_TEST
+#ifdef TRIPLE_TEST
                         * m_dCoordFact
 #endif
                         << " ";
@@ -999,7 +1007,7 @@ bool MeshSaver::saveActiveMesh(void)
             m_plog->msg(__func__, "Calculating entities count...");
             m_iMeshCount = meshes->count();
 
-#ifdef TRIPPLE_TEST
+#ifdef TRIPLE_TEST
             for (int jj = 0; (jj < 3) && retc; jj++)
 #endif
             {
@@ -1053,7 +1061,7 @@ bool MeshSaver::saveActiveMesh(void)
                 m_iTriEntityTag = 1;
                 m_iPolyEntityTag = 1;
 
-#ifdef TRIPPLE_TEST
+#ifdef TRIPLE_TEST
                 m_dCoordFact = 2.;
                 for (int jj = 0; (jj < 3) && retc; jj++)
                 {
@@ -1090,7 +1098,7 @@ bool MeshSaver::saveActiveMesh(void)
                 m_iTriFirstPointTag = 1;
                 m_iPolyFirstPointTag = 1;
 
-#ifdef TRIPPLE_TEST
+#ifdef TRIPLE_TEST
                 for (int jj = 0; (jj < 3) && retc; jj++)
 #endif
                 {

@@ -1,18 +1,11 @@
 /* --------------------------------------
  * SaveMesh plug-in mesh saving feature
  *
- * Term explanation:
- *      Nodes / points -- tripplets of coordinates of all vertices of polygons of the mesh.
- *      Elements -- polygons of the mesh, referencing to the vertex points through their tags -- integer order numbers
- *      Entity -- group of nodes or elements, stored in the mesh file as a separate chunk.
- *      Entities correspond to the vectors of points and triangles / quads / polygons, obtained through getters of TriangleMesh or PolygonMesh classes
- *      First in the mesh file are stored all point entities from all mesh classes, in the second part -- all element entities.
- *      Look here for details of the .msh file structure: TODO:
  */
 
 #pragma once
 
-#define TRIPPLE_TEST
+// #define TRIPLE_TEST
 
 #include <iostream> 
 #include <sstream>
@@ -90,7 +83,7 @@ private:
     /* int */ size_t m_iTriFirstPointTag = 1;
     /* int */ size_t m_iPolyFirstPointTag = 1;
 
-#ifdef TRIPPLE_TEST
+#ifdef TRIPLE_TEST
     double m_dCoordFact = 1.;
 #endif
 

@@ -58,28 +58,28 @@ For the compilation of the project press the menu item `Build/Build Solution`.
 
 The following test data files are provided in the repository:
 
-    - `1.71_1.78_1.85 GHz_Single Element.step` &ndash; input file with the model for mesh generation;
-    - `SaveMesh_polygon.msh` and `SaveMesh_triangle.msh` &ndash; result files of the ordinary test;
-    - `SaveMesh_polygon_3x.msh` and `SaveMesh_triangle_3x.msh` &ndash; result files of enhanced test.
+- `1.71_1.78_1.85 GHz_Single Element.step` &ndash; input file with the model for mesh generation;
+- `SaveMesh_polygon.msh` and `SaveMesh_triangle.msh` &ndash; result files of the ordinary test;
+- `SaveMesh_polygon_3x.msh` and `SaveMesh_triangle_3x.msh` &ndash; result files of enhanced test.
 
 The test procedure:
 
-    - Start `Fusion 360`,
-    - Open the file `1.71_1.78_1.85 GHz_Single Element.step`,
-    - Generate the mesh with 20 mm grid:
-        - `MESH` tab
-        - `BRep to Mesh` (the second button on the toolbar)
-        - click the cube
-        - `Maximum edge length` &ndash; enter slider value "20 mm" using the keyboard
-        - `OK`
-    - Start the plug-in `SaveMesh`:
-        - `TOOLS` tab
-        - `ADD-INS` (the second buton on the toolbar)
-        - `Add-Ins` tab
-        - `SaveMesh`
-        - `Run`
-    - After ~6 sec close the Fusion.
-        `SaveMesh_polygon.msh` and `SaveMesh_triangle.msh` should be renewed, but unchanged.
+- Start `Fusion 360`,
+- Open the file `1.71_1.78_1.85 GHz_Single Element.step`,
+- Generate the mesh with 20 mm grid:
+    - `MESH` tab
+    - `BRep to Mesh` (the second button on the toolbar)
+    - click the cube
+    - `Maximum edge length` &ndash; enter slider value "20 mm" using the keyboard
+    - `OK`
+- Start the plug-in `SaveMesh`:
+    - `TOOLS` tab
+    - `ADD-INS` (the second buton on the toolbar)
+    - `Add-Ins` tab
+    - `SaveMesh`
+    - `Run`
+- After ~6 sec close the Fusion.
+    `SaveMesh_polygon.msh` and `SaveMesh_triangle.msh` should be renewed, but unchanged.
 
 There is implemented a second test for deeper `.msh` file structure investigation &ndash;
 all information in Fusion 360 mesh structures is tripled, multiplying point coordinates by decreasing factor.

@@ -33,6 +33,13 @@ The plug-in has no user interface, the mesh of the currently active document is 
   https://help.autodesk.com/view/fusion360/ENU/?guid=GUID-9d1f8c7d-8f3c-44f6-9999-906199fc99f6
   https://help.autodesk.com/cloudhelp/ENU/Fusion-360-API/images/Fusion.pdf
 
+
+### The output file format
+
+The output is written to the mesh file format `.msh` of the `GMsh Project` initiative:
+
+http://gmsh.info/
+
 The saving of the mesh is done in three passes.
 First of all, mesh structures are scanned and counts of all `nodes`, `elements` and `entities`, necessary for the headers of the `.msh` file, calculated.
 After that, all `nodes` are stored to the `entities` of the `$Nodes` section.

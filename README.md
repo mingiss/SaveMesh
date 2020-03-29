@@ -2,6 +2,7 @@ SaveMesh plug-in
 
 TODO: plug-in description
 
+TODO: link to GmshDefines.h
 
 Term explanation:
 

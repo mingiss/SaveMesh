@@ -90,6 +90,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="MeshFile.cpp" />
     <ClCompile Include="SaveMesh.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
@@ -105,6 +106,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GmshDefines.h" />
+    <ClInclude Include="MeshFile.h" />
     <ClInclude Include="MeshSaver.h" />
     <ClInclude Include="SaveMesh.h" />
     <ClInclude Include="SmLogger.h" />
